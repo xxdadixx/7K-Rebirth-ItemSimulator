@@ -1,8 +1,62 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { RING_OPTIONS, WEAPON_MAIN_VALUES, ARMOR_MAIN_VALUES } from './utils/constants';
 import { parseCSVData, getTranscendBonus, getSubstatValue, calculateSetBonus, getValidationStatus, getPotentialValue } from './utils/helpers';
 import { GridHeader } from './components/GridHeader';
 import { EquipmentBlock } from './components/EquipmentBlock';
+
+// คอมโพเนนต์สำหรับแสดงแถวสเตตัสแต่ละบรรทัด พร้อมเอฟเฟกต์แสงกระพริบเมื่อค่าเปลี่ยน
+const AnimatedStatRow = ({ item, stat, isPercent }) => {
+  const total = stat.base + stat.totalChar + stat.totalEquip;
+  const [isFlashing, setIsFlashing] = useState(false);
+
+  // useRef ใช้สำหรับจำค่าสเตตัสก่อนหน้า เพื่อเอามาเทียบว่าค่าเปลี่ยนไปหรือยัง
+  const prevTotal = useRef(total);
+
+  useEffect(() => {
+    // ถ้าสเตตัสปัจจุบัน ไม่เท่ากับ สเตตัสก่อนหน้า = มีการอัพเกรด!
+    if (prevTotal.current !== total) {
+      setIsFlashing(true);
+      const timer = setTimeout(() => setIsFlashing(false), 500); // แสงวาบ 0.5 วินาที
+      prevTotal.current = total; // จำค่าใหม่เอาไว้
+      return () => clearTimeout(timer);
+    }
+  }, [total]);
+
+  // ฟังก์ชันช่วยจัดรูปแบบตัวเลข (เติม % หรือใส่ลูกน้ำ)
+  const fmt = (val) => isPercent ? `${val}%` : val.toLocaleString();
+
+  return (
+    <div className={`relative group flex justify-between items-center text-sm border-b border-slate-700 pb-1 last:border-b-0 cursor-help px-1 rounded transition-all duration-300 ${isFlashing ? 'bg-green-900/40 scale-[1.02] border-transparent z-10' : ''}`}>
+      <span className={`${item.color} font-bold`}>{item.label}</span>
+
+      <div className="flex items-center gap-1">
+        {/* ตัวเลขจะเรืองแสงสีเขียวสว่างเมื่อค่าเปลี่ยน */}
+        <span className={`font-bold transition-colors duration-300 ${isFlashing ? 'text-green-300 drop-shadow-[0_0_8px_rgba(74,222,128,1)]' : 'text-white'}`}>
+          {fmt(total)}
+        </span>
+
+        {stat.totalChar > 0 && <span className="text-yellow-300 text-[10px] font-bold">(+{fmt(stat.totalChar)})</span>}
+        {stat.totalEquip > 0 && <span className="text-green-400 text-[10px] font-bold">(+{fmt(stat.totalEquip)})</span>}
+      </div>
+
+      {/* Tooltip Box (ทำงานตอนเอาเมาส์ชี้) */}
+      {stat.details.length > 0 && (
+        <div className="hidden group-hover:block absolute top-full right-0 mt-1 w-56 bg-slate-950 border border-slate-500 rounded shadow-2xl p-2 z-50 pointer-events-none">
+          <div className="text-[11px] font-bold text-white border-b border-slate-700 pb-1 mb-1 flex justify-between">
+            <span>{item.label} Breakdown</span>
+            <span className="text-slate-400">Base: {fmt(stat.base)}</span>
+          </div>
+          {stat.details.map((d, i) => (
+            <div key={i} className={`flex justify-between text-[10px] ${d.color} leading-tight py-[2px]`}>
+              <span>{d.label}</span>
+              <span className="font-bold">+{fmt(d.value)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function App() {
   const [heroDataList, setHeroDataList] = useState([]);
@@ -11,7 +65,6 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [level, setLevel] = useState(30);
   const [transcend, setTranscend] = useState(6);
   const [ring, setRing] = useState(5);
 
@@ -85,6 +138,7 @@ export default function App() {
     };
 
     Object.values(equipment).forEach(eq => {
+      if (eq.set === 'None') return;
       totals[eq.mainStat.type] = (totals[eq.mainStat.type] || 0) + eq.mainStat.value;
       eq.substats.forEach(sub => {
         totals[sub.type] = (totals[sub.type] || 0) + getSubstatValue(sub.type, sub.rolls);
@@ -252,6 +306,29 @@ export default function App() {
     };
   }, [activeHero, potentials, equipment, ring, transcend]);
 
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  // เอฟเฟกต์จะทำงานทุกครั้งที่ finalStats มีการคำนวณค่าใหม่
+  useEffect(() => {
+    if (!finalStats) return;
+
+    // ใช้ setTimeout ครอบไว้เพื่อไม่ให้ setState ทำงาน Synchronous ทันที (แก้ Error ESLint)
+    const startTimer = setTimeout(() => {
+      setIsUpgrading(true);
+    }, 10); // ดีเลย์แค่ 10ms (มองไม่เห็นด้วยตาเปล่า)
+
+    // ตั้งเวลาให้แสงดับลง
+    const stopTimer = setTimeout(() => {
+      setIsUpgrading(false);
+    }, 400);
+
+    // ล้าง Timer ออกเมื่อ Component ถูกลบหรือรันใหม่
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(stopTimer);
+    };
+  }, [finalStats]);
+
   const validationMsg = getValidationStatus(equipment);
 
   if (isLoading) {
@@ -278,6 +355,17 @@ export default function App() {
 
   if (!activeHero) return <div className="p-10 text-white font-mono">No character data available.</div>;
 
+  const gradeColor = activeHero.grade === 'LEGEND' ? 'text-yellow-400' : activeHero.grade === 'RARE' ? 'text-blue-400' : 'text-white';
+
+  const getRoleColor = (roleStr) => {
+    const role = (roleStr || '').toUpperCase();
+    if (role.includes('ATTACK')) return 'text-red-400';
+    if (role.includes('MAGIC')) return 'text-purple-400';
+    if (role.includes('DEFENSE')) return 'text-blue-400';
+    if (role.includes('SUPPORT')) return 'text-green-400';
+    return 'text-white'; // สีเริ่มต้นถ้าหาไม่เจอ
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300 p-2 font-mono text-sm">
       <div className="max-w-7xl mx-auto space-y-2">
@@ -288,40 +376,52 @@ export default function App() {
         </div>
 
         {/* TOP SECTION: Character Setup & Base Stats */}
-        <div className="border border-slate-600 bg-slate-900 grid grid-cols-1 lg:grid-cols-12">
+        <div
+          className={`grid grid-cols-1 md:grid-cols-4 transition-all duration-500 ${isUpgrading
+            ? 'border-green-400 bg-green-900/30 shadow-[0_0_25px_rgba(74,222,128,0.3)] scale-[1.01]'
+            : 'border border-slate-600 bg-slate-900 shadow-none scale-100'
+            }`}
+        >
 
           <div className="lg:col-span-4 border-r border-slate-600 flex flex-col">
             <GridHeader title="CHARACTER SETUP" />
             <div className="grid grid-cols-3 gap-0 border-b border-slate-700">
-              <div className="bg-slate-800 p-1 text-xs text-slate-400">Name</div>
+              <div className="bg-slate-800 p-1 text-xs text-slate-400 flex items-center">Name</div>
               <div className="col-span-2 p-1">
-                <select className="w-full bg-slate-950 text-white border border-slate-600 outline-none text-xs p-1"
+                {/* 1. ใส่สีให้ Dropdown เลือกชื่อตัวละคร */}
+                <select className={`w-full bg-slate-950 border border-slate-600 outline-none text-xs p-1 font-bold ${gradeColor}`}
                   value={selectedHeroName} onChange={e => setSelectedHeroName(e.target.value)}>
-                  {heroDataList.map(h => <option key={h.name} value={h.name}>{h.name}</option>)}
+                  {heroDataList.map(h => {
+                    // ทำให้รายชื่อใน Dropdown มีสีตาม Grade ด้วย
+                    const optColor = h.grade === 'LEGEND' ? 'text-yellow-400' : h.grade === 'RARE' ? 'text-blue-400' : 'text-white';
+                    return <option key={h.name} value={h.name} className={`bg-slate-900 ${optColor}`}>{h.name}</option>
+                  })}
                 </select>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-0 border-b border-slate-700 text-xs">
-              <div className="bg-slate-800 p-1 text-slate-400 text-center">Level</div>
-              <div className="p-1 border-r border-slate-700">
-                <input type="number" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none"
-                  value={level} onChange={e => setLevel(Number(e.target.value))} />
+              <div className="bg-slate-800 p-1 text-slate-400 text-center flex items-center justify-center">Level</div>
+              <div className="p-1 border-r border-slate-700 flex items-center">
+                {/* ล็อกช่อง Level เป็นข้อความตายตัว 30 (MAX) */}
+                <div className="w-full bg-slate-900 text-slate-500 text-center border border-slate-700 py-[2px] cursor-not-allowed font-bold">
+                  30 (MAX)
+                </div>
               </div>
-              <div className="bg-slate-800 p-1 text-slate-400 text-center">Trans</div>
+              <div className="bg-slate-800 p-1 text-slate-400 text-center flex items-center justify-center">Trans</div>
               <div className="p-1">
-                <input type="number" min="0" max="12" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none"
+                <input type="number" min="0" max="12" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none focus:border-yellow-500 focus:bg-slate-900 transition-colors"
                   value={transcend} onChange={e => setTranscend(Number(e.target.value))} />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-0 text-xs flex-1">
-              <div className="bg-slate-800 p-1 text-slate-400 text-center border-r border-slate-700">
-                Ele: <span className="text-white font-bold">{activeHero.element}</span>
+              <div className="bg-slate-800 p-1 text-slate-400 text-center border-r border-slate-700 flex flex-col justify-center">
+                Ele: <span className={`font-bold ${getRoleColor(activeHero.element)}`}>{activeHero.element}</span>
               </div>
-              <div className="bg-slate-800 p-1 text-slate-400 text-center border-r border-slate-700">
-                Type: <span className="text-white font-bold">{activeHero.type}</span>
+              <div className="bg-slate-800 p-1 text-slate-400 text-center border-r border-slate-700 flex flex-col justify-center">
+                Type: <span className={`font-bold ${getRoleColor(activeHero.type)}`}>{activeHero.type}</span>
               </div>
-              <div className="bg-slate-800 p-1 text-slate-400 text-center">
-                Grade: <span className="text-white font-bold">{activeHero.grade}</span>
+              <div className="bg-slate-800 p-1 text-slate-400 text-center flex flex-col justify-center">
+                Grade: <span className={`font-bold ${gradeColor}`}>{activeHero.grade}</span>
               </div>
             </div>
           </div>
@@ -381,36 +481,9 @@ export default function App() {
               { label: 'Defense', color: 'text-blue-400', key: 'def' },
               { label: 'HP', color: 'text-green-400', key: 'hp' },
               { label: 'Speed', color: 'text-yellow-400', key: 'spd' }
-            ].map(item => {
-              const stat = finalStats.breakdown[item.key];
-              const total = stat.base + stat.totalChar + stat.totalEquip;
-              return (
-                <div key={item.label} className="relative group flex justify-between items-center text-sm border-b border-slate-700 pb-1 last:border-b-0 cursor-help">
-                  <span className={`${item.color} font-bold`}>{item.label}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-white font-bold">{total.toLocaleString()}</span>
-                    {stat.totalChar > 0 && <span className="text-yellow-300 text-[10px] font-bold">(+{stat.totalChar.toLocaleString()})</span>}
-                    {stat.totalEquip > 0 && <span className="text-green-400 text-[10px] font-bold">(+{stat.totalEquip.toLocaleString()})</span>}
-                  </div>
-
-                  {/* Tooltip Box */}
-                  {stat.details.length > 0 && (
-                    <div className="hidden group-hover:block absolute top-full left-1/2 -translate-x-1/2 mt-1 w-56 bg-slate-950 border border-slate-500 rounded shadow-2xl p-2 z-50 pointer-events-none">
-                      <div className="text-[11px] font-bold text-white border-b border-slate-700 pb-1 mb-1 flex justify-between">
-                        <span>{item.label} Breakdown</span>
-                        <span className="text-slate-400">Base: {stat.base.toLocaleString()}</span>
-                      </div>
-                      {stat.details.map((d, i) => (
-                        <div key={i} className={`flex justify-between text-[10px] ${d.color} leading-tight py-[2px]`}>
-                          <span>{d.label}</span>
-                          <span className="font-bold">+{d.value.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            ].map(item => (
+              <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={false} />
+            ))}
           </div>
 
           {/* Sub Stats Column 1 */}
@@ -420,36 +493,9 @@ export default function App() {
               { label: 'Crit Damage', color: 'text-red-400', key: 'critDmg' },
               { label: 'Weakness Hit', color: 'text-purple-400', key: 'weakness' },
               { label: 'Block Rate', color: 'text-blue-300', key: 'block' }
-            ].map(item => {
-              const stat = finalStats.breakdown[item.key];
-              const total = stat.base + stat.totalChar + stat.totalEquip;
-              return (
-                <div key={item.label} className="relative group flex justify-between items-center border-b border-slate-800 pb-1 last:border-b-0 cursor-help">
-                  <span className="text-slate-300">{item.label}</span>
-                  <div className="flex items-center gap-1">
-                    <span className={`${item.color} font-bold`}>{total}%</span>
-                    {stat.totalChar > 0 && <span className="text-yellow-300 text-[9px] font-bold">(+{stat.totalChar}%)</span>}
-                    {stat.totalEquip > 0 && <span className="text-green-400 text-[9px] font-bold">(+{stat.totalEquip}%)</span>}
-                  </div>
-
-                  {/* Tooltip Box */}
-                  {stat.details.length > 0 && (
-                    <div className="hidden group-hover:block absolute top-full right-0 mt-1 w-52 bg-slate-950 border border-slate-500 rounded shadow-2xl p-2 z-50 pointer-events-none">
-                      <div className="text-[11px] font-bold text-white border-b border-slate-700 pb-1 mb-1 flex justify-between">
-                        <span>{item.label}</span>
-                        <span className="text-slate-400">Base: {stat.base}%</span>
-                      </div>
-                      {stat.details.map((d, i) => (
-                        <div key={i} className={`flex justify-between text-[10px] ${d.color} leading-tight py-[2px]`}>
-                          <span>{d.label}</span>
-                          <span className="font-bold">+{d.value}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            ].map(item => (
+              <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} />
+            ))}
           </div>
 
           {/* Sub Stats Column 2 */}
@@ -458,42 +504,15 @@ export default function App() {
               { label: 'Dmg Reduction', color: 'text-emerald-400', key: 'dmgReduc' },
               { label: 'Effect Hit', color: 'text-teal-300', key: 'effHit' },
               { label: 'Effect Res', color: 'text-teal-300', key: 'effRes' }
-            ].map(item => {
-              const stat = finalStats.breakdown[item.key];
-              const total = stat.base + stat.totalChar + stat.totalEquip;
-              return (
-                <div key={item.label} className="relative group flex justify-between items-center border-b border-slate-800 pb-1 last:border-b-0 cursor-help">
-                  <span className="text-slate-300">{item.label}</span>
-                  <div className="flex items-center gap-1">
-                    <span className={`${item.color} font-bold`}>{total}%</span>
-                    {stat.totalChar > 0 && <span className="text-yellow-300 text-[9px] font-bold">(+{stat.totalChar}%)</span>}
-                    {stat.totalEquip > 0 && <span className="text-green-400 text-[9px] font-bold">(+{stat.totalEquip}%)</span>}
-                  </div>
-
-                  {/* Tooltip Box */}
-                  {stat.details.length > 0 && (
-                    <div className="hidden group-hover:block absolute top-full right-0 mt-1 w-52 bg-slate-950 border border-slate-500 rounded shadow-2xl p-2 z-50 pointer-events-none">
-                      <div className="text-[11px] font-bold text-white border-b border-slate-700 pb-1 mb-1 flex justify-between">
-                        <span>{item.label}</span>
-                        <span className="text-slate-400">Base: {stat.base}%</span>
-                      </div>
-                      {stat.details.map((d, i) => (
-                        <div key={i} className={`flex justify-between text-[10px] ${d.color} leading-tight py-[2px]`}>
-                          <span>{d.label}</span>
-                          <span className="font-bold">+{d.value}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            ].map(item => (
+              <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} />
+            ))}
           </div>
 
           {/* Accessory & Set Bonus Column */}
           <div className="p-2 space-y-2 text-xs flex flex-col justify-center">
             <div>
-              <select className="w-full bg-slate-950 text-white border border-slate-600 outline-none p-1"
+              <select className="w-full bg-slate-950 text-white border border-slate-600 outline-none p-1 focus:border-green-400 transition-colors"
                 value={ring} onChange={e => setRing(Number(e.target.value))}>
                 {RING_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label} (+{r.value}%)</option>)}
               </select>

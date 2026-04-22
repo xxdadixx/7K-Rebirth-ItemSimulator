@@ -74,6 +74,13 @@ export const parseCSVData = (csvText) => {
     const lines = csvText.split(/\r?\n/);
     const parsedData = [];
 
+    // รายชื่อที่ไม่อนุญาตให้ดึงมาเป็นตัวละคร
+    const excludeNames = [
+        'ICON', 'Acid Aqua Face', 'Vanguard', 'Bounty Tracker',
+        'Paladin', 'Assassin', 'Gatekeeper', 'Guardian',
+        'Avenger', 'Spellweaver', 'Orchestrator'
+    ];
+
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
@@ -83,7 +90,9 @@ export const parseCSVData = (csvText) => {
         if (cols[0] === "" || cols[0] === "Name" || cols.includes('ELE') || cols.includes('GRADE')) continue;
 
         const name = cols[0];
-        if (!name) continue;
+
+        // ดักจับ: ถ้าชื่อว่าง หรือ ชื่อตรงกับใน Blacklist ให้ข้ามบรรทัดนี้ไปเลย
+        if (!name || excludeNames.includes(name)) continue;
 
         parsedData.push({
             name: name,
