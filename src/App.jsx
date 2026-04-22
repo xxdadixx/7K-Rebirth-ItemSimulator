@@ -1,247 +1,56 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { RING_OPTIONS, WEAPON_MAIN_VALUES, ARMOR_MAIN_VALUES } from './utils/constants';
+import { parseCSVData, getTranscendBonus, getSubstatValue, calculateSetBonus, getValidationStatus, getPotentialValue } from './utils/helpers';
+import { GridHeader } from './components/GridHeader';
+import { EquipmentBlock } from './components/EquipmentBlock';
 
-// --- CONSTANTS & MAPPING RULES ---
-const TRANSCEND_MULTIPLIERS = {
-  LEGEND: {
-    ATK: {
-      Attack:  [0, 0.12, 0.18, 0.18, 0.18, 0.30, 0.36, 0.38, 0.40, 0.42, 0.44, 0.46, 0.48],
-      Defense: [0, 0, 0, 0, 0, 0, 0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12], 
-      HP:      [0, 0, 0, 0, 0, 0, 0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12]
-    },
-    NON_ATK: {
-      Attack:  [0, 0, 0, 0, 0, 0, 0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12],
-      Defense: [0, 0.12, 0.18, 0.18, 0.18, 0.30, 0.36, 0.38, 0.40, 0.42, 0.44, 0.46, 0.48],
-      HP:      [0, 0.12, 0.18, 0.18, 0.18, 0.30, 0.36, 0.38, 0.40, 0.42, 0.44, 0.46, 0.48]
-    }
-  },
-  RARE: {
-    ATK: {
-      Attack:  [0, 0.08, 0.12, 0.12, 0.12, 0.20, 0.25, 0.27, 0.29, 0.31, 0.33, 0.35, 0.37],
-      Defense: [0, 0, 0, 0, 0, 0, 0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06],
-      HP:      [0, 0, 0, 0, 0, 0, 0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06]
-    },
-    NON_ATK: {
-      Attack:  [0, 0, 0, 0, 0, 0, 0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06],
-      Defense: [0, 0.08, 0.12, 0.12, 0.12, 0.20, 0.25, 0.27, 0.29, 0.31, 0.33, 0.35, 0.37],
-      HP:      [0, 0.08, 0.12, 0.12, 0.12, 0.20, 0.25, 0.27, 0.29, 0.31, 0.33, 0.35, 0.37]
-    }
-  }
-};
-
-const WEAPON_MAIN_VALUES = {
-  'Attack %': 28, 'Attack Flat': 240, 'Defense %': 28, 'Defense Flat': 160,
-  'HP %': 28, 'HP Flat': 850, 'Crit Rate': 24, 'Crit Damage': 36,
-  'Weakness Hit Chance': 28, 'Effect Hit Rate': 30
-};
-
-const ARMOR_MAIN_VALUES = {
-  'Attack %': 28, 'Attack Flat': 240, 'Defense %': 28, 'Defense Flat': 160,
-  'HP %': 28, 'HP Flat': 850, 'Block Rate': 24, 'Damage Taken Reduction': 16,
-  'Effect Resistance': 30
-};
-
-const SUBSTAT_BASES = {
-  'Attack %': 5, 'Attack Flat': 50, 'Defense %': 5, 'Defense Flat': 30,
-  'HP %': 5, 'HP Flat': 180, 'Speed': 4, 'Crit Rate': 4, 'Crit Damage': 6,
-  'Weakness Hit Chance': 5, 'Block Rate': 4, 'Effect Hit Rate': 5, 'Effect Resistance': 5
-};
-
-const SET_OPTIONS = ['Avenger', 'Orchestrator', 'Spellweaver', 'Paladin', 'Gatekeeper', 'Assassin', 'Bounty Tracker', 'None'];
-const RING_OPTIONS = [
-  { label: 'None', value: 0 }, { label: 'Ring 4 Star', value: 5 },
-  { label: 'Ring 5 Star', value: 7 }, { label: 'Ring 6 Star', value: 10 }
-];
-
-// --- HELPER LOGIC FUNCTIONS ---
-const getTranscendBonus = (baseValue, grade, type, statName, level) => {
-  const safeGrade = grade.toUpperCase() === 'RARE' ? 'RARE' : 'LEGEND';
-  const safeType = type.toUpperCase() === 'ATTACK' || type.toUpperCase() === 'ATK' ? 'ATK' : 'NON_ATK';
-  const multipliers = TRANSCEND_MULTIPLIERS[safeGrade][safeType][statName];
-  const multiplier = multipliers && level >= 0 && level <= 12 ? multipliers[level] : 0;
-  return Math.floor(baseValue * multiplier);
-};
-
-const getSubstatValue = (type, rolls) => {
-  const base = SUBSTAT_BASES[type] || 0;
-  return base * (rolls + 1);
-};
-
-const calculateSetBonus = (setsArray) => {
-  const counts = {};
-  setsArray.forEach(s => { if (s !== 'None') counts[s] = (counts[s] || 0) + 1; });
-
-  if (counts['Paladin'] === 4) return "Income Healing Boots 20%";
-  if (counts['Gatekeeper'] === 4) return "Block Damage Reduction 10%";
-  if (counts['Avenger'] === 4) return "Damage Dealt 30%\nBoss Damage 40%";
-  if (counts['Avenger'] >= 2) return "Damage Dealt 15%";
-  if (counts['Assassin'] === 4) return "Ignore Defense 15%";
-  if (counts['Bounty Tracker'] === 4) return "Weakness Hit Damage 35%";
-  if (counts['Spellweaver'] === 4) return "Effect Probability 10%";
-  if (counts['Orchestrator'] === 4) return "Star Battles with 1 turn of Crowd Control Immunity";
-  
-  return "-";
-};
-
-const getValidationStatus = (equipments) => {
-  let totalRemaining = 0;
-  Object.values(equipments).forEach(eq => {
-    const sumRolls = eq.substats.reduce((acc, sub) => acc + sub.rolls, 0);
-    totalRemaining += (5 - sumRolls);
-  });
-
-  if (totalRemaining > 0) {
-    return { text: "You still have unused substats remaining", color: "text-yellow-400" };
-  } else if (totalRemaining < 0) {
-    return { text: "There are more substats than possible!?", color: "text-red-500" };
-  } else {
-    return { text: "Your build is complete!", color: "text-green-400" };
-  }
-};
-
-const parseCSVData = (csvText) => {
-  const lines = csvText.split(/\r?\n/);
-  const parsedData = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    const cols = line.split(',');
-    const name = cols[1];
-    if (!name || name === 'Name') continue;
-
-    parsedData.push({
-      name: name,
-      element: cols[6] || 'Unknown',
-      type: cols[7] || 'Unknown',
-      baseAtk: parseInt(cols[8], 10) || 0,
-      baseDef: parseInt(cols[9], 10) || 0,
-      baseHp: parseInt(cols[10], 10) || 0,
-      baseSpd: parseInt(cols[11], 10) || 0,
-      grade: cols[14] || 'LEGEND'
-    });
-  }
-  return parsedData;
-};
-
-// --- UI COMPONENTS ---
-const GridHeader = ({ title }) => (
-  <div className="bg-slate-700 text-white font-bold text-xs p-1 uppercase border border-slate-600">
-    {title}
-  </div>
-);
-
-const EquipmentBlock = ({ title, data, onChange, allowedMains }) => {
-  const updateMainStat = (typeStr) => {
-    let newValue = data.mainStat.value;
-    if (allowedMains && allowedMains[typeStr] !== undefined) {
-      newValue = allowedMains[typeStr];
-    }
-    onChange({ ...data, mainStat: { type: typeStr, value: newValue } });
-  };
-
-  const updateSubstatType = (index, typeStr) => {
-    const newSubs = [...data.substats];
-    newSubs[index].type = typeStr;
-    onChange({ ...data, substats: newSubs });
-  };
-
-  const updateSubstatRolls = (index, rollStr) => {
-    const newSubs = [...data.substats];
-    newSubs[index].rolls = Number(rollStr);
-    onChange({ ...data, substats: newSubs });
-  };
-
-  const mainStatKeys = allowedMains ? Object.keys(allowedMains) : Object.keys(SUBSTAT_BASES);
-
-  return (
-    <div className="border border-slate-600 bg-slate-900 flex flex-col">
-      <GridHeader title={title} />
-      
-      <div className="grid grid-cols-4 border-b border-slate-700">
-        <div className="bg-slate-800 text-slate-300 text-xs p-1 flex items-center">SET NAME</div>
-        <div className="col-span-3 p-1">
-          <select className="w-full bg-transparent text-white text-xs border border-slate-600 outline-none p-1"
-            value={data.set} onChange={(e) => onChange({...data, set: e.target.value})}>
-            {SET_OPTIONS.map(s => <option key={s} value={s} className="bg-slate-900">{s}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 border-b border-slate-700">
-        <div className="bg-slate-800 text-yellow-500 font-bold text-xs p-1 flex items-center">MAIN STAT</div>
-        <div className="col-span-2 p-1 border-r border-slate-700">
-          <select className="w-full bg-transparent text-white text-xs outline-none p-1"
-            value={data.mainStat.type} onChange={(e) => updateMainStat(e.target.value)}>
-            {mainStatKeys.map(s => <option key={s} value={s} className="bg-slate-900">{s}</option>)}
-          </select>
-        </div>
-        <div className="col-span-1 p-1 flex items-center justify-end pr-2 text-white text-xs font-bold">
-          {data.mainStat.value}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-12 bg-slate-800 border-b border-slate-700 text-[10px] text-slate-400 font-bold">
-        <div className="col-span-7 p-1 border-r border-slate-700">SUBSTATS</div>
-        <div className="col-span-2 p-1 border-r border-slate-700 text-center">ROLLS</div>
-        <div className="col-span-3 p-1 text-center">TOTAL VAL</div>
-      </div>
-
-      {data.substats.map((sub, idx) => (
-        <div key={idx} className="grid grid-cols-12 border-b border-slate-800 last:border-b-0 text-xs hover:bg-slate-800">
-          <div className="col-span-7 p-1 border-r border-slate-700">
-            <select className="w-full bg-transparent text-slate-200 outline-none text-xs"
-              value={sub.type} onChange={(e) => updateSubstatType(idx, e.target.value)}>
-              {Object.keys(SUBSTAT_BASES).map(s => <option key={s} value={s} className="bg-slate-900">{s}</option>)}
-            </select>
-          </div>
-          <div className="col-span-2 p-1 border-r border-slate-700">
-            <input type="number" min="0" max="5" className="w-full bg-slate-950 text-slate-200 border border-slate-600 outline-none text-center"
-              value={sub.rolls} onChange={(e) => updateSubstatRolls(idx, e.target.value)} />
-          </div>
-          <div className="col-span-3 p-1 flex items-center justify-end pr-2 text-white">
-            {getSubstatValue(sub.type, sub.rolls)}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// --- MAIN APPLICATION ---
-export default function Simulator() {
+export default function App() {
   const [heroDataList, setHeroDataList] = useState([]);
   const [selectedHeroName, setSelectedHeroName] = useState('');
-  
-  // States for Loading & Error
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [level, setLevel] = useState(30);
-  const [transcend, setTranscend] = useState(5);
+  const [transcend, setTranscend] = useState(6);
   const [ring, setRing] = useState(5);
 
-  const [potentials, setPotentials] = useState({
-    atk: { lv: 0, val: 0 }, def: { lv: 0, val: 0 }, hp: { lv: 0, val: 0 }
-  });
+  const [potentials, setPotentials] = useState({ atk: 0, def: 0, hp: 0 });
 
-  const defaultSubstats = () => Array(5).fill(0).map(() => ({ type: 'Attack %', rolls: 0 }));
+  const defaultSubstats = () => [
+    { type: 'Attack %', rolls: 0 },
+    { type: 'Defense %', rolls: 0 },
+    { type: 'HP %', rolls: 0 },
+    { type: 'Speed', rolls: 0 }
+  ];
 
   const [equipment, setEquipment] = useState({
-    weapon: { set: 'Avenger', mainStat: { type: 'Attack %', value: 28 }, substats: defaultSubstats() },
-    armor: { set: 'Avenger', mainStat: { type: 'Defense %', value: 28 }, substats: defaultSubstats() },
-    acc1: { set: 'Avenger', mainStat: { type: 'Crit Rate', value: 24 }, substats: defaultSubstats() },
-    acc2: { set: 'Avenger', mainStat: { type: 'Crit Damage', value: 36 }, substats: defaultSubstats() }
+    weapon1: {
+      set: 'None',
+      mainStat: { type: 'Attack %', value: 0 },
+      substats: defaultSubstats()
+    },
+    weapon2: {
+      set: 'None',
+      mainStat: { type: 'Attack %', value: 0 },
+      substats: defaultSubstats()
+    },
+    armor1: {
+      set: 'None',
+      mainStat: { type: 'Defense %', value: 0 },
+      substats: defaultSubstats()
+    },
+    armor2: {
+      set: 'None',
+      mainStat: { type: 'Defense %', value: 0 },
+      substats: defaultSubstats()
+    }
   });
 
   useEffect(() => {
-    console.log("Fetching CSV...");
-    setIsLoading(true);
-    setError(null);
-
-    fetch('/DATA.csv')
+    fetch('../public/DATA.csv')
       .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.text();
       })
       .then(text => {
@@ -269,8 +78,9 @@ export default function Simulator() {
 
     let totals = {
       'Attack %': 0, 'Attack Flat': 0, 'Defense %': 0, 'Defense Flat': 0,
-      'HP %': 0, 'HP Flat': 0, 'Speed': 0, 'Crit Rate': 0, 'Crit Damage': 100, 
-      'Weakness Hit Chance': 0, 'Block Rate': 0, 'Damage Taken Reduction': 0, 
+      'HP %': 0, 'HP Flat': 0, 'Speed': 0,
+      'Crit Rate': 0, 'Crit Damage': 0,
+      'Weakness Hit Chance': 0, 'Block Rate': 0, 'Damage Taken Reduction': 0,
       'Effect Hit Rate': 0, 'Effect Resistance': 0
     };
 
@@ -281,38 +91,169 @@ export default function Simulator() {
       });
     });
 
-    totals['Attack %'] += ring;
-    totals['Defense %'] += ring;
-    totals['HP %'] += ring;
+    const eqList = [equipment.weapon1.set, equipment.weapon2.set, equipment.armor1.set, equipment.armor2.set];
+    const setCounts = {};
+    eqList.forEach(s => { setCounts[s] = (setCounts[s] || 0) + 1; });
 
-    const tAtk = getTranscendBonus(activeHero.baseAtk, activeHero.grade, activeHero.type, 'Attack', transcend);
-    const tDef = getTranscendBonus(activeHero.baseDef, activeHero.grade, activeHero.type, 'Defense', transcend);
-    const tHp  = getTranscendBonus(activeHero.baseHp, activeHero.grade, activeHero.type, 'HP', transcend);
+    const vanguardAtkPct = setCounts['Vanguard'] === 4 ? 45 : (setCounts['Vanguard'] >= 2 ? 20 : 0);
+    const guardianDefPct = setCounts['Guardian'] === 4 ? 45 : (setCounts['Guardian'] >= 2 ? 20 : 0);
+    const paladinHpPct = setCounts['Paladin'] === 4 ? 40 : (setCounts['Paladin'] >= 2 ? 17 : 0);
 
-    const baseAtkSum = activeHero.baseAtk + tAtk + potentials.atk.val;
-    const baseDefSum = activeHero.baseDef + tDef + potentials.def.val;
-    const baseHpSum = activeHero.baseHp + tHp + potentials.hp.val;
+    const assassinCR = setCounts['Assassin'] === 4 ? 30 : (setCounts['Assassin'] >= 2 ? 15 : 0);
+    const bountyWK = setCounts['Bounty Tracker'] === 4 ? 35 : (setCounts['Bounty Tracker'] >= 2 ? 15 : 0);
+    const gatekeeperBLK = setCounts['Gatekeeper'] === 4 ? 30 : (setCounts['Gatekeeper'] >= 2 ? 15 : 0);
+    const spellweaverEFF = setCounts['Spellweaver'] === 4 ? 35 : (setCounts['Spellweaver'] >= 2 ? 17 : 0);
+    const vanguardEFF = setCounts['Vanguard'] === 4 ? 20 : 0;
+    const orchestratorRES = setCounts['Orchestrator'] === 4 ? 35 : (setCounts['Orchestrator'] >= 2 ? 17 : 0);
+    const guardianRES = setCounts['Guardian'] === 4 ? 20 : 0;
+
+    let t4CR = 0, t4CDM = 0, t4WK = 0, t4BLK = 0, t4RED = 0, t4EFF = 0;
+    if (transcend >= 4) {
+      switch (activeHero.star4Type) {
+        case 'CR': t4CR = 18; break;
+        case 'CDM': t4CDM = 24; break;
+        case 'WK': t4WK = 20; break;
+        case 'BLK': t4BLK = 18; break;
+        case 'RED': t4RED = 10; break;
+        case 'EFF': t4EFF = 24; break;
+        default: break;
+      }
+    }
+
+    const tAtk = getTranscendBonus(activeHero.baseAtk, activeHero.grade, activeHero.starType, 'Attack', transcend);
+    const tDef = getTranscendBonus(activeHero.baseDef, activeHero.grade, activeHero.starType, 'Defense', transcend);
+    const tHp = getTranscendBonus(activeHero.baseHp, activeHero.grade, activeHero.starType, 'HP', transcend);
+
+    const pAtk = getPotentialValue('atk', potentials.atk);
+    const pDef = getPotentialValue('def', potentials.def);
+    const pHp = getPotentialValue('hp', potentials.hp);
+
+    const atkPctVal = Math.floor(activeHero.baseAtk * totals['Attack %'] / 100);
+    const atkSetVal = Math.floor(activeHero.baseAtk * vanguardAtkPct / 100);
+    const atkRingVal = Math.floor(activeHero.baseAtk * ring / 100);
+
+    const defPctVal = Math.floor(activeHero.baseDef * totals['Defense %'] / 100);
+    const defSetVal = Math.floor(activeHero.baseDef * guardianDefPct / 100);
+    const defRingVal = Math.floor(activeHero.baseDef * ring / 100);
+
+    const hpPctVal = Math.floor(activeHero.baseHp * totals['HP %'] / 100);
+    const hpSetVal = Math.floor(activeHero.baseHp * paladinHpPct / 100);
+    const hpRingVal = Math.floor(activeHero.baseHp * ring / 100);
+
+    const breakdown = {
+      atk: {
+        base: activeHero.baseAtk,
+        totalChar: (304 * 2) + tAtk + pAtk,
+        totalEquip: totals['Attack Flat'] + atkPctVal + atkSetVal + atkRingVal,
+        details: [
+          { label: '[Char] Level Base Bonus', value: 304 * 2, color: 'text-yellow-300' },
+          { label: '[Char] Transcend', value: tAtk, color: 'text-yellow-300' },
+          { label: '[Char] Potential', value: pAtk, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Flat', value: totals['Attack Flat'], color: 'text-green-400' },
+          { label: `[Equip] Main/Sub (${totals['Attack %']}%)`, value: atkPctVal, color: 'text-green-400' },
+          { label: `[Equip] Vanguard Set (${vanguardAtkPct}%)`, value: atkSetVal, color: 'text-green-400' },
+          { label: `[Equip] Ring (${ring}%)`, value: atkRingVal, color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      def: {
+        base: activeHero.baseDef,
+        totalChar: (189 * 2) + tDef + pDef,
+        totalEquip: totals['Defense Flat'] + defPctVal + defSetVal + defRingVal,
+        details: [
+          { label: '[Char] Level Base Bonus', value: 189 * 2, color: 'text-yellow-300' },
+          { label: '[Char] Transcend', value: tDef, color: 'text-yellow-300' },
+          { label: '[Char] Potential', value: pDef, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Flat', value: totals['Defense Flat'], color: 'text-green-400' },
+          { label: `[Equip] Main/Sub (${totals['Defense %']}%)`, value: defPctVal, color: 'text-green-400' },
+          { label: `[Equip] Guardian Set (${guardianDefPct}%)`, value: defSetVal, color: 'text-green-400' },
+          { label: `[Equip] Ring (${ring}%)`, value: defRingVal, color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      hp: {
+        base: activeHero.baseHp,
+        totalChar: (1079 * 2) + tHp + pHp,
+        totalEquip: totals['HP Flat'] + hpPctVal + hpSetVal + hpRingVal,
+        details: [
+          { label: '[Char] Level Base Bonus', value: 1079 * 2, color: 'text-yellow-300' },
+          { label: '[Char] Transcend', value: tHp, color: 'text-yellow-300' },
+          { label: '[Char] Potential', value: pHp, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Flat', value: totals['HP Flat'], color: 'text-green-400' },
+          { label: `[Equip] Main/Sub (${totals['HP %']}%)`, value: hpPctVal, color: 'text-green-400' },
+          { label: `[Equip] Paladin Set (${paladinHpPct}%)`, value: hpSetVal, color: 'text-green-400' },
+          { label: `[Equip] Ring (${ring}%)`, value: hpRingVal, color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      spd: {
+        base: activeHero.baseSpd, totalChar: 0, totalEquip: totals['Speed'],
+        details: [{ label: '[Equip] Main/Sub Stats', value: totals['Speed'], color: 'text-green-400' }].filter(d => d.value > 0)
+      },
+      critRate: {
+        base: 5, totalChar: t4CR, totalEquip: assassinCR + totals['Crit Rate'],
+        details: [
+          { label: '[Char] Star 4 Bonus', value: t4CR, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Stats', value: totals['Crit Rate'], color: 'text-green-400' },
+          { label: '[Equip] Assassin Set', value: assassinCR, color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      critDmg: {
+        base: 150, totalChar: t4CDM, totalEquip: totals['Crit Damage'],
+        details: [
+          { label: '[Char] Star 4 Bonus', value: t4CDM, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Stats', value: totals['Crit Damage'], color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      weakness: {
+        base: 0, totalChar: t4WK, totalEquip: bountyWK + totals['Weakness Hit Chance'],
+        details: [
+          { label: '[Char] Star 4 Bonus', value: t4WK, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Stats', value: totals['Weakness Hit Chance'], color: 'text-green-400' },
+          { label: '[Equip] Bounty Tracker Set', value: bountyWK, color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      block: {
+        base: 0, totalChar: t4BLK, totalEquip: gatekeeperBLK + totals['Block Rate'],
+        details: [
+          { label: '[Char] Star 4 Bonus', value: t4BLK, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Stats', value: totals['Block Rate'], color: 'text-green-400' },
+          { label: '[Equip] Gatekeeper Set', value: gatekeeperBLK, color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      dmgReduc: {
+        base: 0, totalChar: t4RED, totalEquip: totals['Damage Taken Reduction'],
+        details: [
+          { label: '[Char] Star 4 Bonus', value: t4RED, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Stats', value: totals['Damage Taken Reduction'], color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      effHit: {
+        base: 0, totalChar: t4EFF, totalEquip: spellweaverEFF + vanguardEFF + totals['Effect Hit Rate'],
+        details: [
+          { label: '[Char] Star 4 Bonus', value: t4EFF, color: 'text-yellow-300' },
+          { label: '[Equip] Main/Sub Stats', value: totals['Effect Hit Rate'], color: 'text-green-400' },
+          { label: '[Equip] Spellweaver Set', value: spellweaverEFF, color: 'text-green-400' },
+          { label: '[Equip] Vanguard Set', value: vanguardEFF, color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      },
+      effRes: {
+        base: 0, totalChar: 0, totalEquip: orchestratorRES + guardianRES + totals['Effect Resistance'],
+        details: [
+          { label: '[Equip] Main/Sub Stats', value: totals['Effect Resistance'], color: 'text-green-400' },
+          { label: '[Equip] Orchestrator Set', value: orchestratorRES, color: 'text-green-400' },
+          { label: '[Equip] Guardian Set', value: guardianRES, color: 'text-green-400' }
+        ].filter(d => d.value > 0)
+      }
+    };
 
     return {
-      tAtk, tDef, tHp,
-      atk: Math.floor(baseAtkSum * (1 + totals['Attack %'] / 100)) + totals['Attack Flat'],
-      def: Math.floor(baseDefSum * (1 + totals['Defense %'] / 100)) + totals['Defense Flat'],
-      hp:  Math.floor(baseHpSum * (1 + totals['HP %'] / 100)) + totals['HP Flat'],
-      spd: activeHero.baseSpd + totals['Speed'],
-      critRate: totals['Crit Rate'],
-      critDmg: totals['Crit Damage'],
-      weakness: totals['Weakness Hit Chance'],
-      block: totals['Block Rate'],
-      dmgReduc: totals['Damage Taken Reduction'],
-      effHit: totals['Effect Hit Rate'],
-      effRes: totals['Effect Resistance'],
-      activeSetBonus: calculateSetBonus([equipment.weapon.set, equipment.armor.set, equipment.acc1.set, equipment.acc2.set])
+      tAtk, tDef, tHp,   // ส่งค่า Transcend กลับไปให้ตารางบน
+      pAtk, pDef, pHp,   // ส่งค่า Potential กลับไปให้ตารางบน
+      breakdown,
+      activeSetBonus: calculateSetBonus(eqList)
     };
   }, [activeHero, potentials, equipment, ring, transcend]);
 
   const validationMsg = getValidationStatus(equipment);
 
-  // Render State Handling
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -326,31 +267,29 @@ export default function Simulator() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="bg-red-900 border-2 border-red-500 p-6 rounded-lg text-white font-mono max-w-lg text-center">
           <h2 className="text-2xl font-bold mb-4">Error Loading Data</h2>
-          <p className="mb-4">Could not load or parse the DATA.csv file.</p>
-          <div className="bg-slate-950 p-4 rounded text-red-400 text-sm overflow-x-auto text-left">
+          <div className="bg-slate-950 p-4 rounded text-red-400 text-sm overflow-x-auto text-left mb-4">
             <code>{error}</code>
           </div>
-          <p className="mt-4 text-sm text-slate-300">Please ensure "DATA.csv" is placed in the "public" folder of your Vite project.</p>
+          <p className="text-sm text-slate-300">Please ensure "DATA.csv" is in the "public" folder.</p>
         </div>
       </div>
     );
   }
 
-  if (!activeHero) {
-    return <div className="p-10 text-white font-mono">No character data available.</div>;
-  }
+  if (!activeHero) return <div className="p-10 text-white font-mono">No character data available.</div>;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300 p-2 font-mono text-sm">
       <div className="max-w-7xl mx-auto space-y-2">
-        
+
         {/* VALIDATION MESSAGE */}
         <div className={`border border-slate-700 bg-slate-900 p-3 text-center whitespace-pre-line font-bold text-xs ${validationMsg.color}`}>
           {validationMsg.text}
         </div>
 
-        {/* TOP SECTION: Horizontal Spreadsheet Grid */}
+        {/* TOP SECTION: Character Setup & Base Stats */}
         <div className="border border-slate-600 bg-slate-900 grid grid-cols-1 lg:grid-cols-12">
+
           <div className="lg:col-span-4 border-r border-slate-600 flex flex-col">
             <GridHeader title="CHARACTER SETUP" />
             <div className="grid grid-cols-3 gap-0 border-b border-slate-700">
@@ -365,12 +304,12 @@ export default function Simulator() {
             <div className="grid grid-cols-4 gap-0 border-b border-slate-700 text-xs">
               <div className="bg-slate-800 p-1 text-slate-400 text-center">Level</div>
               <div className="p-1 border-r border-slate-700">
-                <input type="number" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none" 
+                <input type="number" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none"
                   value={level} onChange={e => setLevel(Number(e.target.value))} />
               </div>
               <div className="bg-slate-800 p-1 text-slate-400 text-center">Trans</div>
               <div className="p-1">
-                <input type="number" min="0" max="12" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none" 
+                <input type="number" min="0" max="12" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none"
                   value={transcend} onChange={e => setTranscend(Number(e.target.value))} />
               </div>
             </div>
@@ -394,26 +333,34 @@ export default function Simulator() {
             <div className="col-span-12 grid grid-cols-12 bg-slate-800 border-b border-slate-700 text-[10px] text-center text-slate-400 font-bold">
               <div className="col-span-2 p-1 border-r border-slate-700">STAT</div>
               <div className="col-span-2 p-1 border-r border-slate-700">BASE VAL</div>
-              <div className="col-span-3 p-1 border-r border-slate-700">BONUS</div>
+              <div className="col-span-3 p-1 border-r border-slate-700">★ TRANSCEND</div>
               <div className="col-span-2 p-1 border-r border-slate-700">POTEN LV</div>
               <div className="col-span-3 p-1">POTEN ADD</div>
             </div>
             {['atk', 'def', 'hp'].map((statKey) => {
               const label = statKey === 'atk' ? 'Attack' : statKey === 'def' ? 'Defense' : 'HP';
               const baseValue = statKey === 'atk' ? activeHero.baseAtk : statKey === 'def' ? activeHero.baseDef : activeHero.baseHp;
+
+              // ดึงค่า Transcendence (โบนัสกลุ่มดาว) ที่คำนวณตามสูตรใหม่มาแสดง
               const transBonus = statKey === 'atk' ? finalStats.tAtk : statKey === 'def' ? finalStats.tDef : finalStats.tHp;
+              const potenValue = statKey === 'atk' ? finalStats.pAtk : statKey === 'def' ? finalStats.pDef : finalStats.pHp;
+
               return (
                 <div key={statKey} className="col-span-12 grid grid-cols-12 border-b border-slate-700 text-xs items-center text-center">
                   <div className="col-span-2 p-1 border-r border-slate-700 bg-slate-800 font-bold">{label}</div>
                   <div className="col-span-2 p-1 border-r border-slate-700 text-white">{baseValue}</div>
-                  <div className="col-span-3 p-1 border-r border-slate-700 text-yellow-300">+{transBonus}</div>
-                  <div className="col-span-2 p-1 border-r border-slate-700">
-                     <input type="number" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none" 
-                        value={potentials[statKey].lv} onChange={e => setPotentials({...potentials, [statKey]: {...potentials[statKey], lv: Number(e.target.value)}})} />
+
+                  {/* ช่องแสดงผลโบนัส Transcend สีเหลือง */}
+                  <div className="col-span-3 p-1 border-r border-slate-700 text-yellow-300 font-bold">
+                    +{transBonus}
                   </div>
-                  <div className="col-span-3 p-1">
-                     <input type="number" className="w-full bg-slate-950 text-green-400 font-bold text-center border border-slate-600 outline-none" 
-                        value={potentials[statKey].val} onChange={e => setPotentials({...potentials, [statKey]: {...potentials[statKey], val: Number(e.target.value)}})} />
+
+                  <div className="col-span-2 p-1 border-r border-slate-700">
+                    <input type="number" min="0" max="30" className="w-full bg-slate-950 text-white text-center border border-slate-600 outline-none"
+                      value={potentials[statKey]} onChange={e => setPotentials({ ...potentials, [statKey]: Number(e.target.value) })} />
+                  </div>
+                  <div className="col-span-3 p-1 text-green-400 font-bold">
+                    +{potenValue}
                   </div>
                 </div>
               );
@@ -421,59 +368,148 @@ export default function Simulator() {
           </div>
         </div>
 
-        {/* MIDDLE SECTION: Final Stats */}
+        {/* MIDDLE SECTION: Final Stats Summary */}
         <div className="border border-slate-600 bg-slate-900 grid grid-cols-1 md:grid-cols-4">
           <div className="md:col-span-4">
-            <GridHeader title="FINAL SUMMARY" />
-          </div>
-          
-          <div className="border-r border-slate-700 p-2 space-y-1 bg-slate-800">
-            <div className="flex justify-between items-center text-sm border-b border-slate-700 pb-1">
-              <span className="text-orange-400 font-bold">Attack</span><span className="text-white font-bold">{finalStats.atk.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm border-b border-slate-700 pb-1">
-              <span className="text-blue-400 font-bold">Defense</span><span className="text-white font-bold">{finalStats.def.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm border-b border-slate-700 pb-1">
-              <span className="text-green-400 font-bold">HP</span><span className="text-white font-bold">{finalStats.hp.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-yellow-400 font-bold">Speed</span><span className="text-white font-bold">{finalStats.spd}</span>
-            </div>
+            <GridHeader title="FINAL SUMMARY (Hover for breakdown)" />
           </div>
 
-          <div className="border-r border-slate-700 p-2 space-y-1 text-xs">
-            <div className="flex justify-between border-b border-slate-800 pb-1"><span>Crit Rate</span><span className="text-red-400 font-bold">{finalStats.critRate}%</span></div>
-            <div className="flex justify-between border-b border-slate-800 pb-1"><span>Crit Damage</span><span className="text-red-400 font-bold">{finalStats.critDmg}%</span></div>
-            <div className="flex justify-between border-b border-slate-800 pb-1"><span>Weakness Hit</span><span className="text-purple-400 font-bold">{finalStats.weakness}%</span></div>
-            <div className="flex justify-between"><span>Block Rate</span><span className="text-blue-300 font-bold">{finalStats.block}%</span></div>
+          {/* Main Stats Column */}
+          <div className="border-r border-slate-700 p-2 space-y-1 bg-slate-800 flex flex-col justify-center">
+            {[
+              { label: 'Attack', color: 'text-orange-400', key: 'atk' },
+              { label: 'Defense', color: 'text-blue-400', key: 'def' },
+              { label: 'HP', color: 'text-green-400', key: 'hp' },
+              { label: 'Speed', color: 'text-yellow-400', key: 'spd' }
+            ].map(item => {
+              const stat = finalStats.breakdown[item.key];
+              const total = stat.base + stat.totalChar + stat.totalEquip;
+              return (
+                <div key={item.label} className="relative group flex justify-between items-center text-sm border-b border-slate-700 pb-1 last:border-b-0 cursor-help">
+                  <span className={`${item.color} font-bold`}>{item.label}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-white font-bold">{total.toLocaleString()}</span>
+                    {stat.totalChar > 0 && <span className="text-yellow-300 text-[10px] font-bold">(+{stat.totalChar.toLocaleString()})</span>}
+                    {stat.totalEquip > 0 && <span className="text-green-400 text-[10px] font-bold">(+{stat.totalEquip.toLocaleString()})</span>}
+                  </div>
+
+                  {/* Tooltip Box */}
+                  {stat.details.length > 0 && (
+                    <div className="hidden group-hover:block absolute top-full left-1/2 -translate-x-1/2 mt-1 w-56 bg-slate-950 border border-slate-500 rounded shadow-2xl p-2 z-50 pointer-events-none">
+                      <div className="text-[11px] font-bold text-white border-b border-slate-700 pb-1 mb-1 flex justify-between">
+                        <span>{item.label} Breakdown</span>
+                        <span className="text-slate-400">Base: {stat.base.toLocaleString()}</span>
+                      </div>
+                      {stat.details.map((d, i) => (
+                        <div key={i} className={`flex justify-between text-[10px] ${d.color} leading-tight py-[2px]`}>
+                          <span>{d.label}</span>
+                          <span className="font-bold">+{d.value.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          <div className="border-r border-slate-700 p-2 space-y-1 text-xs">
-            <div className="flex justify-between border-b border-slate-800 pb-1"><span>Dmg Reduction</span><span className="text-emerald-400 font-bold">{finalStats.dmgReduc}%</span></div>
-            <div className="flex justify-between border-b border-slate-800 pb-1"><span>Effect Hit</span><span className="text-teal-300 font-bold">{finalStats.effHit}%</span></div>
-            <div className="flex justify-between border-b border-slate-800 pb-1"><span>Effect Res</span><span className="text-teal-300 font-bold">{finalStats.effRes}%</span></div>
+          {/* Sub Stats Column 1 */}
+          <div className="border-r border-slate-700 p-2 space-y-1 text-xs flex flex-col justify-center">
+            {[
+              { label: 'Crit Rate', color: 'text-red-400', key: 'critRate' },
+              { label: 'Crit Damage', color: 'text-red-400', key: 'critDmg' },
+              { label: 'Weakness Hit', color: 'text-purple-400', key: 'weakness' },
+              { label: 'Block Rate', color: 'text-blue-300', key: 'block' }
+            ].map(item => {
+              const stat = finalStats.breakdown[item.key];
+              const total = stat.base + stat.totalChar + stat.totalEquip;
+              return (
+                <div key={item.label} className="relative group flex justify-between items-center border-b border-slate-800 pb-1 last:border-b-0 cursor-help">
+                  <span className="text-slate-300">{item.label}</span>
+                  <div className="flex items-center gap-1">
+                    <span className={`${item.color} font-bold`}>{total}%</span>
+                    {stat.totalChar > 0 && <span className="text-yellow-300 text-[9px] font-bold">(+{stat.totalChar}%)</span>}
+                    {stat.totalEquip > 0 && <span className="text-green-400 text-[9px] font-bold">(+{stat.totalEquip}%)</span>}
+                  </div>
+
+                  {/* Tooltip Box */}
+                  {stat.details.length > 0 && (
+                    <div className="hidden group-hover:block absolute top-full right-0 mt-1 w-52 bg-slate-950 border border-slate-500 rounded shadow-2xl p-2 z-50 pointer-events-none">
+                      <div className="text-[11px] font-bold text-white border-b border-slate-700 pb-1 mb-1 flex justify-between">
+                        <span>{item.label}</span>
+                        <span className="text-slate-400">Base: {stat.base}%</span>
+                      </div>
+                      {stat.details.map((d, i) => (
+                        <div key={i} className={`flex justify-between text-[10px] ${d.color} leading-tight py-[2px]`}>
+                          <span>{d.label}</span>
+                          <span className="font-bold">+{d.value}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
+          {/* Sub Stats Column 2 */}
+          <div className="border-r border-slate-700 p-2 space-y-1 text-xs flex flex-col justify-center">
+            {[
+              { label: 'Dmg Reduction', color: 'text-emerald-400', key: 'dmgReduc' },
+              { label: 'Effect Hit', color: 'text-teal-300', key: 'effHit' },
+              { label: 'Effect Res', color: 'text-teal-300', key: 'effRes' }
+            ].map(item => {
+              const stat = finalStats.breakdown[item.key];
+              const total = stat.base + stat.totalChar + stat.totalEquip;
+              return (
+                <div key={item.label} className="relative group flex justify-between items-center border-b border-slate-800 pb-1 last:border-b-0 cursor-help">
+                  <span className="text-slate-300">{item.label}</span>
+                  <div className="flex items-center gap-1">
+                    <span className={`${item.color} font-bold`}>{total}%</span>
+                    {stat.totalChar > 0 && <span className="text-yellow-300 text-[9px] font-bold">(+{stat.totalChar}%)</span>}
+                    {stat.totalEquip > 0 && <span className="text-green-400 text-[9px] font-bold">(+{stat.totalEquip}%)</span>}
+                  </div>
+
+                  {/* Tooltip Box */}
+                  {stat.details.length > 0 && (
+                    <div className="hidden group-hover:block absolute top-full right-0 mt-1 w-52 bg-slate-950 border border-slate-500 rounded shadow-2xl p-2 z-50 pointer-events-none">
+                      <div className="text-[11px] font-bold text-white border-b border-slate-700 pb-1 mb-1 flex justify-between">
+                        <span>{item.label}</span>
+                        <span className="text-slate-400">Base: {stat.base}%</span>
+                      </div>
+                      {stat.details.map((d, i) => (
+                        <div key={i} className={`flex justify-between text-[10px] ${d.color} leading-tight py-[2px]`}>
+                          <span>{d.label}</span>
+                          <span className="font-bold">+{d.value}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Accessory & Set Bonus Column */}
           <div className="p-2 space-y-2 text-xs flex flex-col justify-center">
-             <div>
-                <select className="w-full bg-slate-950 text-white border border-slate-600 outline-none p-1"
-                  value={ring} onChange={e => setRing(Number(e.target.value))}>
-                  {RING_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label} (+{r.value}%)</option>)}
-                </select>
-             </div>
-             <div className="bg-slate-950 border border-slate-700 p-1 text-center text-green-400 whitespace-pre-line leading-tight h-full flex items-center justify-center">
-               {finalStats.activeSetBonus}
-             </div>
+            <div>
+              <select className="w-full bg-slate-950 text-white border border-slate-600 outline-none p-1"
+                value={ring} onChange={e => setRing(Number(e.target.value))}>
+                {RING_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label} (+{r.value}%)</option>)}
+              </select>
+            </div>
+            <div className="bg-slate-950 border border-slate-700 p-1 text-center text-green-400 whitespace-pre-line leading-tight h-full flex items-center justify-center font-bold">
+              {finalStats.activeSetBonus}
+            </div>
           </div>
         </div>
 
-        {/* BOTTOM SECTION: 4 Equipment Slots */}
+        {/* BOTTOM SECTION: Equipment Slots */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
-          <EquipmentBlock title="WEAPON / SLOT 1" data={equipment.weapon} allowedMains={WEAPON_MAIN_VALUES} onChange={v => setEquipment({...equipment, weapon: v})} />
-          <EquipmentBlock title="ARMOR / SLOT 2" data={equipment.armor} allowedMains={ARMOR_MAIN_VALUES} onChange={v => setEquipment({...equipment, armor: v})} />
-          <EquipmentBlock title="ACC 1 / SLOT 3" data={equipment.acc1} onChange={v => setEquipment({...equipment, acc1: v})} />
-          <EquipmentBlock title="ACC 2 / SLOT 4" data={equipment.acc2} onChange={v => setEquipment({...equipment, acc2: v})} />
+          <EquipmentBlock title="WEAPON 1" data={equipment.weapon1} allowedMains={WEAPON_MAIN_VALUES} onChange={v => setEquipment({ ...equipment, weapon1: v })} />
+          <EquipmentBlock title="WEAPON 2" data={equipment.weapon2} allowedMains={WEAPON_MAIN_VALUES} onChange={v => setEquipment({ ...equipment, weapon2: v })} />
+          <EquipmentBlock title="ARMOR 1" data={equipment.armor1} allowedMains={ARMOR_MAIN_VALUES} onChange={v => setEquipment({ ...equipment, armor1: v })} />
+          <EquipmentBlock title="ARMOR 2" data={equipment.armor2} allowedMains={ARMOR_MAIN_VALUES} onChange={v => setEquipment({ ...equipment, armor2: v })} />
         </div>
 
       </div>
