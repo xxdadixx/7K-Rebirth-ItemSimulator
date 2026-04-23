@@ -1,23 +1,21 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { RING_OPTIONS, WEAPON_MAIN_VALUES, ARMOR_MAIN_VALUES } from './utils/constants';
 import { parseCSVData, getTranscendBonus, getSubstatValue, calculateSetBonus, getValidationStatus, getPotentialValue } from './utils/helpers';
-import { GridHeader } from './components/GridHeader';
 import { EquipmentBlock } from './components/EquipmentBlock';
 
-// คอมโพเนนต์สำหรับแสดงแถวสเตตัส (ปรับให้ดูนุ่มนวลขึ้น ไม่มีเส้นใต้แข็งๆ)
 const AnimatedStatRow = ({ item, stat, isPercent, textSize = "text-sm" }) => {
   const total = stat ? (stat.base + (stat.totalChar || 0) + (stat.totalEquip || 0)) : 0;
-  
+
   const [isFlashing, setIsFlashing] = useState(false);
   const prevTotal = useRef(total);
 
   useEffect(() => {
-    if (!stat) return; 
-    
+    if (!stat) return;
+
     if (prevTotal.current !== total) {
       setIsFlashing(true);
-      const timer = setTimeout(() => setIsFlashing(false), 500); 
-      prevTotal.current = total; 
+      const timer = setTimeout(() => setIsFlashing(false), 500);
+      prevTotal.current = total;
       return () => clearTimeout(timer);
     }
   }, [total, stat]);
@@ -27,29 +25,29 @@ const AnimatedStatRow = ({ item, stat, isPercent, textSize = "text-sm" }) => {
   const fmt = (val) => isPercent ? `${val}%` : val.toLocaleString();
 
   return (
-    <div className={`relative group flex justify-between items-center ${textSize} py-1.5 border-b border-white/5 last:border-0 cursor-help px-2 rounded transition-all duration-300 ${isFlashing ? 'bg-green-900/40 scale-[1.02] border-transparent z-10 shadow-lg' : 'hover:bg-slate-800/50'}`}>
-      <span className={`${item.color} font-bold tracking-wide`}>{item.label}</span>
-      
-      <div className="flex items-center gap-1.5">
-        <span className={`font-bold transition-colors duration-300 ${isFlashing ? 'text-green-300 drop-shadow-[0_0_8px_rgba(74,222,128,1)]' : 'text-slate-100'}`}>
+    <div className={`relative group flex justify-between items-center ${textSize} py-2 border-b border-[var(--border-color)] last:border-0 cursor-help px-3 rounded-xl transition-all duration-300 ${isFlashing ? 'bg-[var(--hover-bg)] scale-[1.02] z-10' : 'hover:bg-[var(--hover-bg)] hover:z-50'}`}>
+      <span className={`${item.color} font-medium tracking-wide`}>{item.label}</span>
+
+      <div className="flex items-center gap-2">
+        <span className={`font-semibold transition-colors duration-300 ${isFlashing ? 'text-green-500 scale-110' : 'text-[var(--text-main)]'}`}>
           {fmt(total)}
         </span>
-        
-        {stat.totalChar > 0 && <span className="text-yellow-300 text-[10px] font-bold bg-yellow-900/30 px-1 rounded">(+{fmt(stat.totalChar)})</span>}
-        {stat.totalEquip > 0 && <span className="text-green-400 text-[10px] font-bold bg-green-900/30 px-1 rounded">(+{fmt(stat.totalEquip)})</span>}
+
+        {stat.totalChar > 0 && <span className="text-[var(--color-char)] text-[11px] font-semibold">(+{fmt(stat.totalChar)})</span>}
+        {stat.totalEquip > 0 && <span className="text-[var(--color-equip)] text-[11px] font-semibold">(+{fmt(stat.totalEquip)})</span>}
       </div>
 
       {stat.details.length > 0 && (
-        <div className="hidden group-hover:block absolute top-full right-0 mt-1 w-56 bg-slate-900 border border-slate-600 rounded-lg shadow-2xl p-3 z-50 pointer-events-none">
-          <div className="text-[11px] font-bold text-white border-b border-slate-700 pb-2 mb-2 flex justify-between items-center">
-            <span className="text-slate-300 uppercase">{item.label}</span>
-            <span className="text-slate-400 bg-slate-950 px-2 py-0.5 rounded-full">Base: {fmt(stat.base)}</span>
+        <div className="hidden group-hover:block absolute top-full right-0 mt-2 w-64 bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-2xl shadow-2xl p-4 pointer-events-none">
+          <div className="text-xs font-semibold text-[var(--text-main)] border-b border-[var(--border-color)] pb-2 mb-3 flex justify-between items-center">
+            <span className="uppercase tracking-wider">{item.label}</span>
+            <span className="text-[var(--text-muted)] bg-[var(--input-bg)] px-2 py-1 rounded-full border border-[var(--border-color)]">Base: {fmt(stat.base)}</span>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {stat.details.map((d, i) => (
-              <div key={i} className={`flex justify-between text-[10px] ${d.color} leading-tight`}>
+              <div key={i} className={`flex justify-between text-[11px] font-medium ${d.color || 'text-[var(--text-main)]'} leading-tight`}>
                 <span>{d.label}</span>
-                <span className="font-bold">+{fmt(d.value)}</span>
+                <span className="font-semibold">+{fmt(d.value)}</span>
               </div>
             ))}
           </div>
@@ -60,6 +58,7 @@ const AnimatedStatRow = ({ item, stat, isPercent, textSize = "text-sm" }) => {
 };
 
 export default function App() {
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [heroDataList, setHeroDataList] = useState([]);
   const [selectedHeroName, setSelectedHeroName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +66,9 @@ export default function App() {
   const [transcend, setTranscend] = useState(6);
   const [ring, setRing] = useState(5);
   const [potentials, setPotentials] = useState({ atk: 0, def: 0, hp: 0 });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const defaultSubstats = () => [
     { type: 'Attack %', rolls: 0 },
@@ -81,6 +83,35 @@ export default function App() {
     armor1: { set: 'None', mainStat: { type: 'Defense %', value: 0 }, substats: defaultSubstats() },
     armor2: { set: 'None', mainStat: { type: 'Defense %', value: 0 }, substats: defaultSubstats() }
   });
+
+  const filteredHeroes = useMemo(() => {
+    return heroDataList.filter(h =>
+      h.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [heroDataList, searchTerm]);
+
+  const getGradeColorClass = (grade) => {
+    const g = grade?.toUpperCase();
+    if (g === 'LEGEND') return 'text-[var(--color-legend)]';
+    if (g === 'RARE') return 'text-[var(--color-rare)]';
+    return 'text-[var(--color-normal)]';
+  };
+
+  const getGradeBgClass = (grade) => {
+    const g = grade?.toUpperCase();
+    if (g === 'LEGEND') return 'bg-[var(--color-legend)]/10 border-[var(--color-legend)]/30';
+    if (g === 'RARE') return 'bg-[var(--color-rare)]/10 border-[var(--color-rare)]/30';
+    return 'bg-[var(--color-normal)]/10 border-[var(--color-normal)]/30';
+  };
+
+  // Effect จัดการ Dark Mode
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     fetch('../public/DATA.csv')
@@ -104,6 +135,17 @@ export default function App() {
       .finally(() => {
         setIsLoading(false);
       });
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // ถ้ามีการคลิกนอกพื้นที่ของ dropdownRef ให้ปิด Dropdown
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const activeHero = useMemo(() => heroDataList.find(h => h.name === selectedHeroName) || null, [heroDataList, selectedHeroName]);
@@ -176,100 +218,107 @@ export default function App() {
     const hpSetVal = Math.floor(activeHero.baseHp * paladinHpPct / 100);
     const hpRingVal = Math.floor(activeHero.baseHp * ring / 100);
 
+    const cChar = 'text-[var(--color-char)]';
+    const cEq = 'text-[var(--color-equip)]';
+    const cSet = 'text-[var(--color-set)]';
+    const cRing = 'text-[var(--color-ring)]';
+
     const breakdown = {
       atk: {
         base: activeHero.baseAtk, totalChar: (304 * 2) + tAtk + pAtk, totalEquip: totals['Attack Flat'] + atkPctVal + atkSetVal + atkRingVal,
         details: [
-          { label: '[Char] Level Base Bonus', value: 304 * 2, color: 'text-yellow-300' },
-          { label: '[Char] Transcend', value: tAtk, color: 'text-yellow-300' },
-          { label: '[Char] Potential', value: pAtk, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Flat', value: totals['Attack Flat'], color: 'text-green-400' },
-          { label: `[Equip] Main/Sub (${totals['Attack %']}%)`, value: atkPctVal, color: 'text-green-400' },
-          { label: `[Equip] Vanguard Set (${vanguardAtkPct}%)`, value: atkSetVal, color: 'text-green-400' },
-          { label: `[Equip] Ring (${ring}%)`, value: atkRingVal, color: 'text-green-400' }
+          { label: 'Level Base Bonus', value: 304 * 2, color: cChar },
+          { label: 'Transcend', value: tAtk, color: cChar },
+          { label: 'Potential', value: pAtk, color: cChar },
+          { label: 'Equipment Flat', value: totals['Attack Flat'], color: cEq },
+          { label: `Equip % (${totals['Attack %']}%)`, value: atkPctVal, color: cEq },
+          { label: `Vanguard Set (${vanguardAtkPct}%)`, value: atkSetVal, color: cSet },
+          { label: `Ring (${ring}%)`, value: atkRingVal, color: cRing }
         ].filter(d => d.value > 0)
       },
       def: {
         base: activeHero.baseDef, totalChar: (189 * 2) + tDef + pDef, totalEquip: totals['Defense Flat'] + defPctVal + defSetVal + defRingVal,
         details: [
-          { label: '[Char] Level Base Bonus', value: 189 * 2, color: 'text-yellow-300' },
-          { label: '[Char] Transcend', value: tDef, color: 'text-yellow-300' },
-          { label: '[Char] Potential', value: pDef, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Flat', value: totals['Defense Flat'], color: 'text-green-400' },
-          { label: `[Equip] Main/Sub (${totals['Defense %']}%)`, value: defPctVal, color: 'text-green-400' },
-          { label: `[Equip] Guardian Set (${guardianDefPct}%)`, value: defSetVal, color: 'text-green-400' },
-          { label: `[Equip] Ring (${ring}%)`, value: defRingVal, color: 'text-green-400' }
+          { label: 'Level Base Bonus', value: 189 * 2, color: cChar },
+          { label: 'Transcend', value: tDef, color: cChar },
+          { label: 'Potential', value: pDef, color: cChar },
+          { label: 'Equipment Flat', value: totals['Defense Flat'], color: cEq },
+          { label: `Equip % (${totals['Defense %']}%)`, value: defPctVal, color: cEq },
+          { label: `Guardian Set (${guardianDefPct}%)`, value: defSetVal, color: cSet },
+          { label: `Ring (${ring}%)`, value: defRingVal, color: cRing }
         ].filter(d => d.value > 0)
       },
       hp: {
         base: activeHero.baseHp, totalChar: (1079 * 2) + tHp + pHp, totalEquip: totals['HP Flat'] + hpPctVal + hpSetVal + hpRingVal,
         details: [
-          { label: '[Char] Level Base Bonus', value: 1079 * 2, color: 'text-yellow-300' },
-          { label: '[Char] Transcend', value: tHp, color: 'text-yellow-300' },
-          { label: '[Char] Potential', value: pHp, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Flat', value: totals['HP Flat'], color: 'text-green-400' },
-          { label: `[Equip] Main/Sub (${totals['HP %']}%)`, value: hpPctVal, color: 'text-green-400' },
-          { label: `[Equip] Paladin Set (${paladinHpPct}%)`, value: hpSetVal, color: 'text-green-400' },
-          { label: `[Equip] Ring (${ring}%)`, value: hpRingVal, color: 'text-green-400' }
+          { label: 'Level Base Bonus', value: 1079 * 2, color: cChar },
+          { label: 'Transcend', value: tHp, color: cChar },
+          { label: 'Potential', value: pHp, color: cChar },
+          { label: 'Equipment Flat', value: totals['HP Flat'], color: cEq },
+          { label: `Equip % (${totals['HP %']}%)`, value: hpPctVal, color: cEq },
+          { label: `Paladin Set (${paladinHpPct}%)`, value: hpSetVal, color: cSet },
+          { label: `Ring (${ring}%)`, value: hpRingVal, color: cRing }
         ].filter(d => d.value > 0)
       },
       spd: {
         base: activeHero.baseSpd, totalChar: 0, totalEquip: totals['Speed'],
-        details: [{ label: '[Equip] Main/Sub Stats', value: totals['Speed'], color: 'text-green-400' }].filter(d => d.value > 0)
+        details: [
+          { label: 'Equipment Stats', value: totals['Speed'], color: cEq }
+        ].filter(d => d.value > 0)
       },
       critRate: {
         base: 5, totalChar: t4CR, totalEquip: assassinCR + totals['Crit Rate'],
         details: [
-          { label: '[Char] Star 4 Bonus', value: t4CR, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Stats', value: totals['Crit Rate'], color: 'text-green-400' },
-          { label: '[Equip] Assassin Set', value: assassinCR, color: 'text-green-400' }
+          { label: 'Star 4 Bonus', value: t4CR, color: cChar },
+          { label: 'Equipment Stats', value: totals['Crit Rate'], color: cEq },
+          { label: 'Assassin Set', value: assassinCR, color: cSet }
         ].filter(d => d.value > 0)
       },
       critDmg: {
         base: 150, totalChar: t4CDM, totalEquip: totals['Crit Damage'],
         details: [
-          { label: '[Char] Star 4 Bonus', value: t4CDM, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Stats', value: totals['Crit Damage'], color: 'text-green-400' }
+          { label: 'Star 4 Bonus', value: t4CDM, color: cChar },
+          { label: 'Equipment Stats', value: totals['Crit Damage'], color: cEq }
         ].filter(d => d.value > 0)
       },
       weakness: {
         base: 0, totalChar: t4WK, totalEquip: bountyWK + totals['Weakness Hit Chance'],
         details: [
-          { label: '[Char] Star 4 Bonus', value: t4WK, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Stats', value: totals['Weakness Hit Chance'], color: 'text-green-400' },
-          { label: '[Equip] Bounty Tracker Set', value: bountyWK, color: 'text-green-400' }
+          { label: 'Star 4 Bonus', value: t4WK, color: cChar },
+          { label: 'Equipment Stats', value: totals['Weakness Hit Chance'], color: cEq },
+          { label: 'Bounty Tracker Set', value: bountyWK, color: cSet }
         ].filter(d => d.value > 0)
       },
       block: {
         base: 0, totalChar: t4BLK, totalEquip: gatekeeperBLK + totals['Block Rate'],
         details: [
-          { label: '[Char] Star 4 Bonus', value: t4BLK, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Stats', value: totals['Block Rate'], color: 'text-green-400' },
-          { label: '[Equip] Gatekeeper Set', value: gatekeeperBLK, color: 'text-green-400' }
+          { label: 'Star 4 Bonus', value: t4BLK, color: cChar },
+          { label: 'Equipment Stats', value: totals['Block Rate'], color: cEq },
+          { label: 'Gatekeeper Set', value: gatekeeperBLK, color: cSet }
         ].filter(d => d.value > 0)
       },
       dmgReduc: {
         base: 0, totalChar: t4RED, totalEquip: totals['Damage Taken Reduction'],
         details: [
-          { label: '[Char] Star 4 Bonus', value: t4RED, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Stats', value: totals['Damage Taken Reduction'], color: 'text-green-400' }
+          { label: 'Star 4 Bonus', value: t4RED, color: cChar },
+          { label: 'Equipment Stats', value: totals['Damage Taken Reduction'], color: cEq }
         ].filter(d => d.value > 0)
       },
       effHit: {
         base: 0, totalChar: t4EFF, totalEquip: spellweaverEFF + vanguardEFF + totals['Effect Hit Rate'],
         details: [
-          { label: '[Char] Star 4 Bonus', value: t4EFF, color: 'text-yellow-300' },
-          { label: '[Equip] Main/Sub Stats', value: totals['Effect Hit Rate'], color: 'text-green-400' },
-          { label: '[Equip] Spellweaver Set', value: spellweaverEFF, color: 'text-green-400' },
-          { label: '[Equip] Vanguard Set', value: vanguardEFF, color: 'text-green-400' }
+          { label: 'Star 4 Bonus', value: t4EFF, color: cChar },
+          { label: 'Equipment Stats', value: totals['Effect Hit Rate'], color: cEq },
+          { label: 'Spellweaver Set', value: spellweaverEFF, color: cSet },
+          { label: 'Vanguard Set', value: vanguardEFF, color: cSet }
         ].filter(d => d.value > 0)
       },
       effRes: {
         base: 0, totalChar: 0, totalEquip: orchestratorRES + guardianRES + totals['Effect Resistance'],
         details: [
-          { label: '[Equip] Main/Sub Stats', value: totals['Effect Resistance'], color: 'text-green-400' },
-          { label: '[Equip] Orchestrator Set', value: orchestratorRES, color: 'text-green-400' },
-          { label: '[Equip] Guardian Set', value: guardianRES, color: 'text-green-400' }
+          { label: 'Equipment Stats', value: totals['Effect Resistance'], color: cEq },
+          { label: 'Orchestrator Set', value: orchestratorRES, color: cSet },
+          { label: 'Guardian Set', value: guardianRES, color: cSet }
         ].filter(d => d.value > 0)
       }
     };
@@ -284,150 +333,182 @@ export default function App() {
 
   const validationMsg = getValidationStatus(equipment);
 
-  if (isLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Loading...</div>;
-  if (error) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-red-500">{error}</div>;
-  if (!activeHero) return <div className="p-10 text-white font-mono">No character data available.</div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+  if (!activeHero) return <div className="p-10">No character data available.</div>;
 
-  const gradeColor = activeHero.grade === 'LEGEND' ? 'text-yellow-400' : activeHero.grade === 'RARE' ? 'text-blue-400' : 'text-white';
-  
-  const getRoleColor = (roleStr) => {
-    const role = (roleStr || '').toUpperCase();
-    if (role.includes('ATTACK')) return 'text-red-400';
-    if (role.includes('MAGIC')) return 'text-purple-400';
-    if (role.includes('DEFENSE')) return 'text-blue-400';
-    if (role.includes('SUPPORT')) return 'text-green-400';
-    return 'text-white';
-  };
+  const gradeColor = activeHero.grade === 'LEGEND' ? 'text-yellow-500' : activeHero.grade === 'RARE' ? 'text-blue-500' : 'text-[var(--text-main)]';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 p-4 md:p-6 lg:p-8 font-mono text-sm selection:bg-yellow-500/30">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <div className="min-h-screen p-4 md:p-6 lg:p-10 selection:bg-[var(--accent)] selection:text-white transition-colors duration-400">
+      <div className="max-w-[1400px] mx-auto space-y-8">
+
+        {/* Toggle Mode */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border-color)] shadow-sm hover:scale-105 transition-transform text-sm font-medium text-[var(--text-main)]"
+          >
+            {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          </button>
+        </div>
 
         {/* Validation Warning */}
         {validationMsg.text && (
-          <div className={`border rounded-lg p-3 text-center font-bold text-xs shadow-lg ${validationMsg.color.replace('border-red-500', 'border-red-500/50').replace('bg-slate-900', 'bg-slate-900/80 backdrop-blur')}`}>
+          <div className="bg-[var(--card-bg)] backdrop-blur-xl border border-red-500/30 rounded-2xl p-4 text-center font-medium text-sm text-red-500 shadow-sm">
             {validationMsg.text}
           </div>
         )}
 
-        {/* ==========================================
-            SECTION 1: HERO & BASE STATS
-            ========================================== */}
-        <div className="flex flex-col xl:flex-row gap-6">
-          
-          {/* ซ้าย: Hero Profile (ดีไซน์ใหม่) */}
-          <div className="w-full xl:w-[30%] bg-slate-900/80 backdrop-blur border border-slate-700/50 rounded-2xl shadow-xl flex flex-col overflow-hidden">
-            <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-3 border-b border-white/5">
-              <h2 className="text-white font-bold tracking-widest text-center text-xs">HERO SETUP</h2>
+        {/* SECTION 1: HERO & BASE STATS */}
+        <div className="flex flex-col xl:flex-row gap-8">
+
+          {/* ซ้าย: Hero Profile */}
+          <div className="relative z-40 w-full xl:w-[30%] bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] flex flex-col transition-colors duration-400 aurora-card">
+            <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl">
+              <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Hero Setup</h2>
             </div>
-            
-            <div className="p-5 flex flex-col gap-5">
-              {/* Name Dropdown */}
-              <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 block pl-1">Select Hero</label>
-                <select className={`w-full bg-slate-950 border border-slate-700 rounded-xl outline-none text-base p-3 font-bold ${gradeColor} shadow-inner focus:border-yellow-500 transition-all cursor-pointer`}
-                  value={selectedHeroName} onChange={e => setSelectedHeroName(e.target.value)}>
-                  {heroDataList.map(h => (
-                    <option key={h.name} value={h.name} className={`bg-slate-900 ${h.grade === 'LEGEND' ? 'text-yellow-400' : 'text-blue-400'}`}>
-                      {h.name}
-                    </option>
-                  ))}
-                </select>
+
+            <div className="p-6 flex flex-col gap-6">
+              <div className="relative" ref={dropdownRef}>
+                <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">
+                  Search Hero
+                </label>
+
+                {/* ส่วน Input แสดงชื่อตัวละครที่เลือกและใช้ค้นหา */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-2xl p-3.5 pl-10 font-semibold focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all ${getGradeColorClass(activeHero?.grade)}`}
+                    placeholder="Type to search..."
+                    value={isDropdownOpen ? searchTerm : activeHero?.name || ''}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setIsDropdownOpen(true);
+                    }}
+                    onFocus={() => {
+                      setIsDropdownOpen(true);
+                      setSearchTerm(''); // ล้างคำค้นหาเพื่อให้เห็นรายการทั้งหมดตอนเริ่มค้นใหม่
+                    }}
+                  />
+                  {/* ไอคอนแว่นขยายแบบ Apple Style */}
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* รายการตัวละครที่จะแสดงเมื่อคลิกหรือค้นหา */}
+                {isDropdownOpen && (
+                  // เปลี่ยนพื้นหลังให้เป็น bg-[var(--bg-color)] (ทึบแสง) และตั้งค่า z-[100] ให้ลอยบนสุด
+                  <div className="absolute z-[100] w-full mt-2 max-h-72 overflow-y-auto bg-[var(--bg-color)] border border-[var(--border-color)] rounded-2xl shadow-2xl custom-scrollbar animate-in fade-in zoom-in duration-200">
+                    {filteredHeroes.length > 0 ? (
+                      filteredHeroes.map(h => (
+                        <button
+                          key={h.name}
+                          className={`w-full text-left px-4 py-3 hover:bg-[var(--hover-bg)] transition-colors flex justify-between items-center border-b border-[var(--border-color)] last:border-0 ${getGradeColorClass(h.grade)}`}
+                          onClick={() => {
+                            setSelectedHeroName(h.name);
+                            setIsDropdownOpen(false); // ปิดทันทีเมื่อเลือก
+                            setSearchTerm('');
+                          }}
+                        >
+                          <span className="font-semibold">{h.name}</span>
+                          <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getGradeBgClass(h.grade)}`}>
+                            {h.grade}
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-[var(--text-muted)] text-sm">No hero found</div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Level & Trans */}
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 block pl-1">Level</label>
-                  <div className="w-full bg-slate-800/40 text-slate-500 text-center border border-slate-700/50 rounded-xl py-2.5 cursor-not-allowed font-bold text-sm">
+                  <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">Level</label>
+                  <div className="w-full bg-[var(--input-bg)] text-[var(--text-muted)] text-center border border-[var(--border-color)] rounded-2xl py-3 cursor-not-allowed font-semibold text-sm">
                     30 (MAX)
                   </div>
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 block pl-1 text-yellow-300">★ Trans</label>
-                  <input type="number" min="0" max="12" 
-                    className="w-full bg-slate-950 text-white text-center border border-slate-700 rounded-xl py-2.5 text-sm focus:border-yellow-500 shadow-inner outline-none transition-all"
+                  <label className="text-[11px] text-yellow-500 font-medium uppercase tracking-wider mb-2 block pl-1">★ Trans</label>
+                  <input type="number" min="0" max="12"
+                    className="w-full bg-[var(--input-bg)] text-[var(--text-main)] text-center border border-[var(--input-border)] rounded-2xl py-3 text-sm focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all"
                     value={transcend} onChange={e => setTranscend(Number(e.target.value))} />
                 </div>
               </div>
 
-              {/* Tags (Element, Type, Grade) */}
-              <div className="flex justify-between gap-3 pt-4 border-t border-white/5">
-                <div className="flex-1 bg-slate-950/50 rounded-xl p-2.5 text-center border border-slate-800/50">
-                  <div className="text-[9px] text-slate-500 mb-1">ELEMENT</div>
-                  <div className={`font-bold text-xs ${getRoleColor(activeHero.element)}`}>{activeHero.element}</div>
+              <div className="flex justify-between gap-3 pt-4 border-t border-[var(--border-color)]">
+                <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
+                  <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Element</div>
+                  <div className="font-semibold text-sm text-[var(--text-main)]">{activeHero.element}</div>
                 </div>
-                <div className="flex-1 bg-slate-950/50 rounded-xl p-2.5 text-center border border-slate-800/50">
-                  <div className="text-[9px] text-slate-500 mb-1">TYPE</div>
-                  <div className={`font-bold text-xs ${getRoleColor(activeHero.type)}`}>{activeHero.type}</div>
+                <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
+                  <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Type</div>
+                  <div className="font-semibold text-sm text-[var(--text-main)]">{activeHero.type}</div>
                 </div>
-                <div className="flex-1 bg-slate-950/50 rounded-xl p-2.5 text-center border border-slate-800/50">
-                  <div className="text-[9px] text-slate-500 mb-1">GRADE</div>
-                  <div className={`font-bold text-xs ${gradeColor}`}>{activeHero.grade}</div>
+                <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
+                  <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Grade</div>
+                  <div className={`font-semibold text-sm ${gradeColor}`}>{activeHero.grade}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ขวา: Base Stats & Potentials (ดีไซน์ใหม่ ไร้เส้นตาราง) */}
-          <div className="w-full xl:w-[70%] bg-slate-900/80 backdrop-blur border border-slate-700/50 rounded-2xl shadow-xl flex flex-col overflow-hidden">
-            <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-3 border-b border-white/5">
-              <h2 className="text-white font-bold tracking-widest text-center text-xs">BASE STATS & POTENTIALS</h2>
+          {/* ขวา: Base Stats & Potentials */}
+          <div className="w-full xl:w-[70%] bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] flex flex-col overflow-hidden transition-colors duration-400 aurora-card">
+            <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)]">
+              <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Base Stats & Potentials</h2>
             </div>
-            
-            <div className="p-5 flex flex-col gap-3">
-              {/* Header Row สำหรับ Stats */}
-              <div className="hidden md:flex items-center text-[10px] text-slate-500 font-bold px-4 pb-2 border-b border-white/5 tracking-wider">
-                <div className="w-1/4">STAT TYPE</div>
-                <div className="w-1/5 text-center">BASE</div>
-                <div className="w-1/5 text-center text-yellow-500/80">★ TRANSCEND</div>
-                <div className="w-1/5 text-center">POTEN LV</div>
-                <div className="w-[15%] text-right text-green-500/80">POTEN ADD</div>
+
+            <div className="p-6 flex flex-col gap-4">
+              <div className="hidden md:flex items-center text-[11px] text-[var(--text-muted)] font-medium px-4 pb-2 border-b border-[var(--border-color)] tracking-wider uppercase">
+                <div className="w-1/4">Stat Type</div>
+                <div className="w-1/5 text-center">Base</div>
+                <div className="w-1/5 text-center">★ Transcend</div>
+                <div className="w-1/5 text-center">Poten Lv</div>
+                <div className="w-[15%] text-right">Poten Add</div>
               </div>
 
-              {/* Rows */}
               {['atk', 'def', 'hp'].map((statKey) => {
                 const isAtk = statKey === 'atk';
                 const isDef = statKey === 'def';
-                const label = isAtk ? 'ATTACK' : isDef ? 'DEFENSE' : 'HP';
-                const color = isAtk ? 'text-orange-400' : isDef ? 'text-blue-400' : 'text-green-400';
+                const label = isAtk ? 'Attack' : isDef ? 'Defense' : 'HP';
                 const baseValue = isAtk ? activeHero.baseAtk : isDef ? activeHero.baseDef : activeHero.baseHp;
                 const transBonus = isAtk ? finalStats.tAtk : isDef ? finalStats.tDef : finalStats.tHp;
                 const potenValue = isAtk ? finalStats.pAtk : isDef ? finalStats.pDef : finalStats.pHp;
 
                 return (
-                  <div key={statKey} className="flex flex-col md:flex-row md:items-center justify-between bg-slate-800/30 hover:bg-slate-800/60 transition-colors p-3.5 rounded-xl border border-white/5 gap-3 md:gap-0">
-                    
-                    {/* 1. Stat Name */}
+                  <div key={statKey} className="flex flex-col md:flex-row md:items-center justify-between bg-[var(--input-bg)] hover:bg-[var(--hover-bg)] transition-colors p-4 rounded-2xl border border-[var(--border-color)] gap-4 md:gap-0">
                     <div className="flex items-center gap-3 w-full md:w-1/4">
                       <div className={`w-1.5 h-6 rounded-full ${isAtk ? 'bg-orange-500' : isDef ? 'bg-blue-500' : 'bg-green-500'}`}></div>
-                      <span className={`font-bold text-sm tracking-wider ${color}`}>{label}</span>
+                      <span className="font-semibold text-[var(--text-main)]">{label}</span>
                     </div>
 
-                    {/* 2. Base */}
                     <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                      <span className="md:hidden text-[10px] text-slate-500">BASE</span>
-                      <span className="text-white font-bold text-base">{baseValue.toLocaleString()}</span>
+                      <span className="md:hidden text-[11px] text-[var(--text-muted)]">BASE</span>
+                      <span className="text-[var(--text-main)] font-semibold text-base">{baseValue.toLocaleString()}</span>
                     </div>
 
-                    {/* 3. Trans Bonus */}
                     <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                      <span className="md:hidden text-[10px] text-slate-500">TRANS</span>
-                      <span className="text-yellow-400 font-bold text-sm bg-yellow-900/20 px-2 py-0.5 rounded-md">+{transBonus.toLocaleString()}</span>
+                      <span className="md:hidden text-[11px] text-[var(--text-muted)]">TRANS</span>
+                      <span className="text-[var(--text-muted)] font-medium text-sm">+{transBonus.toLocaleString()}</span>
                     </div>
 
-                    {/* 4. Potential Input */}
                     <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                      <span className="md:hidden text-[10px] text-slate-500">LEVEL</span>
-                      <input type="number" min="0" max="30" 
-                        className="w-16 bg-slate-950 border border-slate-600 rounded-lg py-1.5 text-center text-sm text-white focus:border-green-400 outline-none transition-all"
+                      <span className="md:hidden text-[11px] text-[var(--text-muted)]">LEVEL</span>
+                      <input type="number" min="0" max="30"
+                        className="w-16 bg-[var(--bg-color)] border border-[var(--input-border)] rounded-xl py-2 text-center text-sm text-[var(--text-main)] focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all"
                         value={potentials[statKey]} onChange={e => setPotentials({ ...potentials, [statKey]: Number(e.target.value) })} />
                     </div>
 
-                    {/* 5. Potential Add */}
                     <div className="w-full md:w-[15%] flex justify-between md:justify-end items-center pr-2">
-                      <span className="md:hidden text-[10px] text-slate-500">POTEN</span>
-                      <span className="text-green-400 font-bold text-sm">+{potenValue.toLocaleString()}</span>
+                      <span className="md:hidden text-[11px] text-[var(--text-muted)]">POTEN</span>
+                      <span className="text-[var(--accent)] font-semibold text-sm">+{potenValue.toLocaleString()}</span>
                     </div>
                   </div>
                 );
@@ -436,78 +517,69 @@ export default function App() {
           </div>
         </div>
 
-        {/* ==========================================
-            SECTION 2: FINAL SUMMARY (ดีไซน์ใหม่)
-            ========================================== */}
-        <div className="bg-slate-900/80 backdrop-blur border border-slate-700/50 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.3)] overflow-hidden">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-3 border-b border-white/5">
-            <h2 className="text-white font-bold tracking-widest text-center text-xs">FINAL COMBAT STATS</h2>
+        {/* SECTION 2: FINAL SUMMARY */}
+        <div className="relative z-50 bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] transition-colors duration-400 aurora-card">
+          <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl">
+            <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Final Combat Stats</h2>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/5">
-            
-            {/* Main Stats */}
-            <div className="p-4 space-y-1 bg-slate-800/20">
+
+          <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
+            <div className="p-6 space-y-2">
               {[
-                { label: 'Attack', color: 'text-orange-400', key: 'atk' },
-                { label: 'Defense', color: 'text-blue-400', key: 'def' },
-                { label: 'HP', color: 'text-green-400', key: 'hp' },
-                { label: 'Speed', color: 'text-yellow-400', key: 'spd' }
+                { label: 'Attack', color: 'text-orange-500', key: 'atk' },
+                { label: 'Defense', color: 'text-blue-500', key: 'def' },
+                { label: 'HP', color: 'text-green-500', key: 'hp' },
+                { label: 'Speed', color: 'text-yellow-500', key: 'spd' }
               ].map(item => (
                 <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={false} textSize="text-[15px]" />
               ))}
             </div>
 
-            {/* Sub Stats 1 */}
-            <div className="p-4 space-y-1">
+            <div className="p-6 space-y-2">
               {[
-                { label: 'Crit Rate', color: 'text-red-400', key: 'critRate' },
-                { label: 'Crit Damage', color: 'text-red-400', key: 'critDmg' },
-                { label: 'Weakness Hit', color: 'text-purple-400', key: 'weakness' },
-                { label: 'Block Rate', color: 'text-blue-300', key: 'block' }
+                { label: 'Crit Rate', color: 'text-red-500', key: 'critRate' },
+                { label: 'Crit Damage', color: 'text-red-500', key: 'critDmg' },
+                { label: 'Weakness Hit', color: 'text-purple-500', key: 'weakness' },
+                { label: 'Block Rate', color: 'text-blue-400', key: 'block' }
               ].map(item => (
-                <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-xs" />
+                <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />
               ))}
             </div>
 
-            {/* Sub Stats 2 */}
-            <div className="p-4 space-y-1">
+            <div className="p-6 space-y-2">
               {[
-                { label: 'Dmg Reduction', color: 'text-emerald-400', key: 'dmgReduc' },
-                { label: 'Effect Hit', color: 'text-teal-300', key: 'effHit' },
-                { label: 'Effect Res', color: 'text-teal-300', key: 'effRes' }
+                { label: 'Dmg Reduction', color: 'text-teal-500', key: 'dmgReduc' },
+                { label: 'Effect Hit', color: 'text-cyan-500', key: 'effHit' },
+                { label: 'Effect Res', color: 'text-cyan-500', key: 'effRes' }
               ].map(item => (
-                <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-xs" />
+                <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />
               ))}
             </div>
 
-            {/* Accessory & Bonus */}
-            <div className="p-4 flex flex-col gap-4 justify-center bg-slate-800/10">
+            <div className="p-6 flex flex-col gap-6 justify-center">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 block pl-1">Accessory Ring</label>
-                <select className="w-full bg-slate-950 text-white border border-slate-700 rounded-xl outline-none p-2.5 focus:border-green-400 transition-all shadow-inner text-sm"
+                <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">Accessory Ring</label>
+                <select className="w-full bg-[var(--input-bg)] text-[var(--text-main)] border border-[var(--input-border)] rounded-2xl outline-none p-3.5 focus:ring-2 focus:ring-[var(--accent)] transition-all text-sm appearance-none cursor-pointer"
                   value={ring} onChange={e => setRing(Number(e.target.value))}>
-                  {RING_OPTIONS.map(r => <option key={r.value} value={r.value} className="bg-slate-900">{r.label} (+{r.value}%)</option>)}
+                  {RING_OPTIONS.map(r => <option key={r.value} value={r.value} className="bg-[var(--bg-color)]">{r.label} (+{r.value}%)</option>)}
                 </select>
               </div>
-              <div className="bg-slate-950/80 border border-slate-700/50 rounded-xl p-3 text-center text-green-400 whitespace-pre-line leading-relaxed h-full flex items-center justify-center font-bold text-[11px] shadow-inner">
+              <div className="bg-[var(--input-bg)] border border-[var(--border-color)] rounded-2xl p-4 text-center text-[var(--accent)] whitespace-pre-line leading-relaxed h-full flex items-center justify-center font-semibold text-xs shadow-inner">
                 {finalStats.activeSetBonus || "No Active Set Bonus"}
               </div>
             </div>
           </div>
         </div>
 
-        {/* ==========================================
-            SECTION 3: EQUIPMENT SLOTS
-            ========================================== */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 xl:gap-6 pt-2">
+        {/* SECTION 3: EQUIPMENT SLOTS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-4">
           {[
-            { title: "WEAPON 1", key: "weapon1", allowed: WEAPON_MAIN_VALUES },
-            { title: "WEAPON 2", key: "weapon2", allowed: WEAPON_MAIN_VALUES },
-            { title: "ARMOR 1", key: "armor1", allowed: ARMOR_MAIN_VALUES },
-            { title: "ARMOR 2", key: "armor2", allowed: ARMOR_MAIN_VALUES }
+            { title: "Weapon 1", key: "weapon1", allowed: WEAPON_MAIN_VALUES },
+            { title: "Weapon 2", key: "weapon2", allowed: WEAPON_MAIN_VALUES },
+            { title: "Armor 1", key: "armor1", allowed: ARMOR_MAIN_VALUES },
+            { title: "Armor 2", key: "armor2", allowed: ARMOR_MAIN_VALUES }
           ].map((eq) => (
-            <div key={eq.key} className="bg-slate-900/80 backdrop-blur border border-slate-700/50 rounded-2xl overflow-hidden shadow-xl hover:border-slate-500/80 transition-all hover:-translate-y-1 duration-300">
+            <div key={eq.key} className="bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl overflow-hidden shadow-[var(--glass-shadow)] hover:-translate-y-1 transition-transform duration-300">
               <EquipmentBlock title={eq.title} data={equipment[eq.key]} allowedMains={eq.allowed} onChange={v => setEquipment({ ...equipment, [eq.key]: v })} />
             </div>
           ))}
