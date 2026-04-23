@@ -135,3 +135,9 @@ export const formatStatValue = (statName, value) => {
 
     return value.toLocaleString();
 };
+
+export const getTransColorClass = (val) => {
+    if (val >= 1 && val <= 6) return "trans-blue";
+    if (val >= 7 && val <= 12) return "trans-red";
+    return "";
+  };

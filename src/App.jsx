@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { RING_OPTIONS } from './utils/constants';
-import { parseCSVData, getValidationStatus } from './utils/helpers';
+import { parseCSVData, getValidationStatus, getTransColorClass } from './utils/helpers';
 import { useHeroStats } from './hooks/useHeroStats';
 import { TopBar } from './components/TopBar';
 import { AnimatedStatRow } from './components/AnimatedStatRow';
@@ -15,7 +15,7 @@ export default function App() {
   const [error, setError] = useState(null);
 
   const [transcend, setTranscend] = useState(6);
-  const [ring, setRing] = useState(5);
+  const [ring, setRing] = useState(6);
   const [potentials, setPotentials] = useState({ atk: 0, def: 0, hp: 0, spd: 0 });
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -117,12 +117,6 @@ export default function App() {
     return 'text-(--text-main)';
   };
 
-  const getTransColorClass = (val) => {
-    if (val >= 7) return 'text-red-500';
-    if (val >= 1) return 'text-blue-500';
-    return 'text-(--text-main)';
-  };
-
   const getGradeColorClass = (grade) => {
     const g = grade?.toUpperCase();
     if (g === 'LEGEND') return 'text-(--color-legend)';
@@ -199,28 +193,27 @@ export default function App() {
                     <div className="w-full bg-(--input-bg) text-red-500 text-center border border-(--border-color) rounded-2xl py-3 cursor-not-allowed font-bold text-sm shadow-[inset_0_1px_1px_var(--glass-inner)] truncate">30 (MAX)</div>
                   </div>
 
-                  {/* กล่อง Trans: เพิ่ม min-w-0 */}
+                  {/* กล่อง Trans */}
                   <div className="flex-1 min-w-0">
                     <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1 truncate">Trans</label>
                     <div className="relative w-full">
-                      <select
-                        className={`w-full bg-(--input-bg) ${getTransColorClass(transcend)} text-center border border-(--input-border) rounded-2xl py-3 pr-8 text-sm font-bold focus:ring-2 focus:ring-(--accent) outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] appearance-none cursor-pointer truncate`}
+                      <GlassSelect
                         value={transcend}
-                        onChange={e => setTranscend(Number(e.target.value))}
-                      >
-                        {[...Array(12)].map((_, i) => {
+                        onChange={(val) => setTranscend(Number(val))}
+                        options={[...Array(12)].map((_, i) => {
                           const val = i + 1;
-                          return (
-                            <option key={val} value={val} className={`bg-(--bg-color) font-bold ${getTransColorClass(val)}`}>
-                              ★ {val}
-                            </option>
-                          );
-                        })}
-                      </select>
+                          // กำหนดสีของตัวหนังสือตามเงื่อนไข (1-6 สีฟ้า, 7-12 สีแดง)
+                          const fontColor = val <= 6 ? 'text-[#3b82f6]' : 'text-[#ef4444]';
 
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-(--text-muted)">
-                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="m19 9-7 7-7-7" /></svg>
-                      </div>
+                          return {
+                            label: `★ ${val}`,
+                            value: val,
+                            className: fontColor // <--- ส่ง class สีเข้าไปในแต่ละ option
+                          };
+                        })}
+                        className={getTransColorClass(transcend)}
+                        centered={true}
+                      />
                     </div>
                   </div>
 
@@ -230,11 +223,9 @@ export default function App() {
                   <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1">Accessory Ring</label>
                   <GlassSelect
                     value={ring}
-                    onChange={(val) => setRing(val)}
-                    options={RING_OPTIONS.map(r => ({
-                      label: `${r.label} (+${r.value}%)`,
-                      value: r.value
-                    }))}
+                    onChange={(val) => setRing(Number(val))}
+                    options={RING_OPTIONS.map(r => ({ label: r.label, value: r.value }))}
+                    centered={true}
                   />
                 </div>
 

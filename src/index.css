@@ -220,11 +220,13 @@
   z-index: 150;
   margin-top: 0.5rem;
   overflow: hidden;
-  background: var(--card-bg); /* ใช้ตัวแปรเดียวกับการ์ดหลัก */
+  background: var(--card-bg);
+  /* ใช้ตัวแปรเดียวกับการ์ดหลัก */
   backdrop-filter: blur(25px) saturate(180%);
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   border: 1px solid var(--border-color);
-  border-radius: 1.25rem; /* 20px (rounded-2xl) */
+  border-radius: 1.25rem;
+  /* 20px (rounded-2xl) */
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   animation: dropdown-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -234,12 +236,44 @@
   transition: all 200ms ease;
   cursor: pointer;
 }
+
 .dropdown-item-hover:hover {
   background-color: var(--hover-bg);
-  padding-left: 1.25rem; /* ขยับนิดนึงให้ดูพรีเมียม */
+  padding-left: 1.25rem;
+  /* ขยับนิดนึงให้ดูพรีเมียม */
 }
 
 @keyframes dropdown-in {
-  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* สไตล์สำหรับ Trans ★ 1 - 6 (สีฟ้า) */
+.trans-blue {
+  --accent: #3b82f6;
+  /* Blue 500 */
+  --input-border: rgba(59, 130, 246, 0.3);
+}
+
+/* สไตล์สำหรับ Trans ★ 7 - 12 (สีแดง) */
+.trans-red {
+  --accent: #ef4444;
+  /* Red 500 */
+  --input-border: rgba(239, 68, 68, 0.3);
+}
+
+/* เพิ่มเติม: ทำให้ตัวเลขดาวใน Dropdown เปลี่ยนสีตามไปด้วยถ้าต้องการ */
+.trans-blue .dropdown-item-hover.bg-\(--accent\)\/10 {
+  color: #3b82f6;
+}
+
+.trans-red .dropdown-item-hover.bg-\(--accent\)\/10 {
+  color: #ef4444;
 }
