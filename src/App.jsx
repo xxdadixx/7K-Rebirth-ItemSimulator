@@ -96,7 +96,7 @@ export default function App() {
     if (el === 'UNIVERSAL') return 'text-purple-500';
     if (el === 'DEFENSE') return 'text-amber-700';
     if (el === 'SUPPORT') return 'text-yellow-500';
-    return 'text-[var(--text-main)]';
+    return 'text-(--text-main)';
   };
 
   const getElementBgClass = (element) => {
@@ -113,27 +113,27 @@ export default function App() {
     const type = t?.toUpperCase();
     if (type === 'ATTACK') return 'text-red-500';
     if (type === 'MAGIC') return 'text-blue-500';
-    return 'text-[var(--text-main)]';
+    return 'text-(--text-main)';
   };
 
   const getTransColorClass = (val) => {
     if (val >= 7) return 'text-red-500';
     if (val >= 1) return 'text-blue-500';
-    return 'text-[var(--text-main)]';
+    return 'text-(--text-main)';
   };
 
   const getGradeColorClass = (grade) => {
     const g = grade?.toUpperCase();
-    if (g === 'LEGEND') return 'text-[var(--color-legend)]';
-    if (g === 'RARE') return 'text-[var(--color-rare)]';
-    return 'text-[var(--color-normal)]';
+    if (g === 'LEGEND') return 'text-(--color-legend)';
+    if (g === 'RARE') return 'text-(--color-rare)';
+    return 'text-(--color-normal)';
   };
 
   const getGradeBgClass = (grade) => {
     const g = grade?.toUpperCase();
-    if (g === 'LEGEND') return 'bg-[var(--color-legend)]/10 border-[var(--color-legend)]/30';
-    if (g === 'RARE') return 'bg-[var(--color-rare)]/10 border-[var(--color-rare)]/30';
-    return 'bg-[var(--color-normal)]/10 border-[var(--color-normal)]/30';
+    if (g === 'LEGEND') return 'bg-(--color-legend)/10 border-(--color-legend)/30';
+    if (g === 'RARE') return 'bg-(--color-rare)/10 border-(--color-rare)/30';
+    return 'bg-(--color-normal)/10 border-(--color-normal)/30';
   };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -151,25 +151,25 @@ export default function App() {
           <div className="relative z-60 w-full xl:w-[30%] flex flex-col">
             <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden">
               <div className="aurora-bg aurora-style-1"></div>
-              <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-[var(--border-color)] shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
+              <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
             </div>
             <div className="relative z-10 flex flex-col h-full">
-              <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl">
-                <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Hero Setup</h2>
+              <div className="bg-(--card-header) p-4 border-b border-(--border-color) rounded-t-3xl">
+                <h2 className="text-(--text-muted) font-semibold tracking-widest text-center text-xs uppercase">Hero Setup</h2>
               </div>
               <div className="p-6 flex flex-col gap-6">
                 <div className="relative" ref={dropdownRef}>
-                  <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">Search Hero</label>
+                  <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1">Search Hero</label>
                   <div className="relative">
-                    <input type="text" className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-2xl p-3.5 pl-10 font-semibold focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] ${getGradeColorClass(activeHero?.grade)}`} placeholder="Type to search..." value={isDropdownOpen ? searchTerm : activeHero?.name || ''} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => { setIsDropdownOpen(true); setSearchTerm(''); }} />
-                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
+                    <input type="text" className={`w-full bg-(--input-bg) border border-(--input-border) rounded-2xl p-3.5 pl-10 font-semibold focus:ring-2 focus:ring-(--accent) outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] ${getGradeColorClass(activeHero?.grade)}`} placeholder="Type to search..." value={isDropdownOpen ? searchTerm : activeHero?.name || ''} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => { setIsDropdownOpen(true); setSearchTerm(''); }} />
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--text-muted)"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
                   </div>
                   {isDropdownOpen && (
-                    <div className="absolute z-[100] w-full mt-2 max-h-72 overflow-y-auto bg-[var(--bg-color)] border border-[var(--border-color)] rounded-2xl shadow-2xl custom-scrollbar animate-in fade-in zoom-in duration-200">
+                    <div className="absolute z-100 w-full mt-2 max-h-72 overflow-y-auto bg-(--bg-color) border border-(--border-color) rounded-2xl shadow-2xl custom-scrollbar animate-in fade-in zoom-in duration-200">
                       {filteredHeroes.length > 0 ? filteredHeroes.map(h => (
                         <button
                           key={h.name}
-                          className={`w-full text-left px-4 py-3 hover:bg-[var(--hover-bg)] transition-colors flex justify-between items-center border-b border-[var(--border-color)] last:border-0 ${getGradeColorClass(h.grade)}`}
+                          className={`w-full text-left px-4 py-3 hover:bg-(--hover-bg) transition-colors flex justify-between items-center border-b border-(--border-color) last:border-0 ${getGradeColorClass(h.grade)}`}
                           onClick={() => { setSelectedHeroName(h.name); setIsDropdownOpen(false); setSearchTerm(''); }}
                         >
                           <span className="font-semibold">{h.name}</span>
@@ -187,7 +187,7 @@ export default function App() {
                             </span>
                           </div>
                         </button>
-                      )) : <div className="p-4 text-center text-[var(--text-muted)] text-sm">No hero found</div>}
+                      )) : <div className="p-4 text-center text-(--text-muted) text-sm">No hero found</div>}
                     </div>
                   )}
                 </div>
@@ -197,30 +197,30 @@ export default function App() {
 
                   {/* กล่อง Level: เพิ่ม min-w-0 */}
                   <div className="flex-1 min-w-0">
-                    <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1 truncate">Level</label>
-                    <div className="w-full bg-[var(--input-bg)] text-red-500 text-center border border-[var(--border-color)] rounded-2xl py-3 cursor-not-allowed font-bold text-sm shadow-[inset_0_1px_1px_var(--glass-inner)] truncate">30 (MAX)</div>
+                    <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1 truncate">Level</label>
+                    <div className="w-full bg-(--input-bg) text-red-500 text-center border border-(--border-color) rounded-2xl py-3 cursor-not-allowed font-bold text-sm shadow-[inset_0_1px_1px_var(--glass-inner)] truncate">30 (MAX)</div>
                   </div>
 
                   {/* กล่อง Trans: เพิ่ม min-w-0 */}
                   <div className="flex-1 min-w-0">
-                    <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1 truncate">Trans</label>
+                    <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1 truncate">Trans</label>
                     <div className="relative w-full">
                       <select
-                        className={`w-full bg-[var(--input-bg)] ${getTransColorClass(transcend)} text-center border border-[var(--input-border)] rounded-2xl py-3 pr-8 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] appearance-none cursor-pointer truncate`}
+                        className={`w-full bg-(--input-bg) ${getTransColorClass(transcend)} text-center border border-(--input-border) rounded-2xl py-3 pr-8 text-sm font-bold focus:ring-2 focus:ring-(--accent) outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] appearance-none cursor-pointer truncate`}
                         value={transcend}
                         onChange={e => setTranscend(Number(e.target.value))}
                       >
                         {[...Array(12)].map((_, i) => {
                           const val = i + 1;
                           return (
-                            <option key={val} value={val} className={`bg-[var(--bg-color)] font-bold ${getTransColorClass(val)}`}>
+                            <option key={val} value={val} className={`bg-(--bg-color) font-bold ${getTransColorClass(val)}`}>
                               ★ {val}
                             </option>
                           );
                         })}
                       </select>
 
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]">
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-(--text-muted)">
                         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="m19 9-7 7-7-7" /></svg>
                       </div>
                     </div>
@@ -229,24 +229,24 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">Accessory Ring</label>
+                  <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1">Accessory Ring</label>
                   <div className="relative">
-                    <select className="w-full bg-[var(--input-bg)] text-[var(--text-main)] border border-[var(--input-border)] rounded-2xl outline-none p-3.5 focus:ring-2 focus:ring-[var(--accent)] transition-all text-sm appearance-none cursor-pointer font-semibold shadow-[inset_0_1px_1px_var(--glass-inner)]" value={ring} onChange={e => setRing(Number(e.target.value))}>
-                      {RING_OPTIONS.map(r => <option key={r.value} value={r.value} className="bg-[var(--bg-color)]">{r.label} (+{r.value}%)</option>)}
+                    <select className="w-full bg-(--input-bg) text-(--text-main) border border-(--input-border) rounded-2xl outline-none p-3.5 focus:ring-2 focus:ring-(--accent) transition-all text-sm appearance-none cursor-pointer font-semibold shadow-[inset_0_1px_1px_var(--glass-inner)]" value={ring} onChange={e => setRing(Number(e.target.value))}>
+                      {RING_OPTIONS.map(r => <option key={r.value} value={r.value} className="bg-(--bg-color)">{r.label} (+{r.value}%)</option>)}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="m19 9-7 7-7-7" /></svg></div>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-(--text-muted)"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="m19 9-7 7-7-7" /></svg></div>
                   </div>
                 </div>
 
-                <div className="flex justify-between gap-3 pt-4 border-t border-[var(--border-color)]">
-                  <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
-                    <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Element</div><div className={`font-bold text-sm ${getElementColorClass(activeHero.element)}`}>{activeHero.element}</div>
+                <div className="flex justify-between gap-3 pt-4 border-t border-(--border-color)">
+                  <div className="flex-1 bg-(--input-bg) rounded-2xl p-3 text-center border border-(--border-color)">
+                    <div className="text-[10px] text-(--text-muted) mb-1 uppercase">Element</div><div className={`font-bold text-sm ${getElementColorClass(activeHero.element)}`}>{activeHero.element}</div>
                   </div>
-                  <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
-                    <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Type</div><div className={`font-bold text-sm ${getTypeColorClass(activeHero.type)}`}>{activeHero.type}</div>
+                  <div className="flex-1 bg-(--input-bg) rounded-2xl p-3 text-center border border-(--border-color)">
+                    <div className="text-[10px] text-(--text-muted) mb-1 uppercase">Type</div><div className={`font-bold text-sm ${getTypeColorClass(activeHero.type)}`}>{activeHero.type}</div>
                   </div>
-                  <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
-                    <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Grade</div><div className={`font-bold text-sm ${getGradeColorClass(activeHero.grade)}`}>{activeHero.grade}</div>
+                  <div className="flex-1 bg-(--input-bg) rounded-2xl p-3 text-center border border-(--border-color)">
+                    <div className="text-[10px] text-(--text-muted) mb-1 uppercase">Grade</div><div className={`font-bold text-sm ${getGradeColorClass(activeHero.grade)}`}>{activeHero.grade}</div>
                   </div>
                 </div>
               </div>
@@ -255,14 +255,14 @@ export default function App() {
 
           {/* ขวา: Base Stats & Potentials */}
           <div className="relative z-40 w-full xl:w-[70%] flex flex-col">
-            <div className="absolute inset-0 rounded-3xl shadow-[var(--glass-shadow)] overflow-hidden">
+            <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden">
               <div className="aurora-bg aurora-style-2"></div>
-              <div className="absolute inset-0 bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
+              <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
             </div>
             <div className="relative z-10 flex flex-col h-full">
-              <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl"><h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Base Stats & Potentials</h2></div>
+              <div className="bg-(--card-header) p-4 border-b border-(--border-color) rounded-t-3xl"><h2 className="text-(--text-muted) font-semibold tracking-widest text-center text-xs uppercase">Base Stats & Potentials</h2></div>
               <div className="p-6 flex flex-col gap-4">
-                <div className="hidden md:flex items-center text-[11px] text-[var(--text-muted)] font-medium px-4 pb-2 border-b border-[var(--border-color)] tracking-wider uppercase">
+                <div className="hidden md:flex items-center text-[11px] text-(--text-muted) font-medium px-4 pb-2 border-b border-(--border-color) tracking-wider uppercase">
                   <div className="w-1/4">Stat Type</div><div className="w-1/5 text-center">Base</div><div className="w-1/5 text-center">★ Transcend</div><div className="w-1/5 text-center">Poten Lv</div><div className="w-[15%] text-right">Poten Add</div>
                 </div>
                 {['atk', 'def', 'hp', 'spd'].map((statKey) => {
@@ -287,44 +287,44 @@ export default function App() {
                   const potenValue = isSpd ? 0 : (isAtk ? finalStats.pAtk : isDef ? finalStats.pDef : finalStats.pHp);
 
                   return (
-                    <div key={statKey} className="flex flex-col md:flex-row md:items-center justify-between bg-[var(--input-bg)] hover:bg-[var(--hover-bg)] transition-colors p-4 rounded-2xl border border-[var(--border-color)] gap-4 md:gap-0 shadow-[inset_0_1px_1px_var(--glass-inner)]">
+                    <div key={statKey} className="flex flex-col md:flex-row md:items-center justify-between bg-(--input-bg) hover:bg-(--hover-bg) transition-colors p-4 rounded-2xl border border-(--border-color) gap-4 md:gap-0 shadow-[inset_0_1px_1px_var(--glass-inner)]">
 
                       {/* 1. Stat Label & Icon Color */}
                       <div className="flex items-center gap-3 w-full md:w-1/4">
                         <div className={`w-1.5 h-6 rounded-full ${colorClass}`}></div>
-                        <span className="font-bold text-[var(--text-main)]">{label}</span>
+                        <span className="font-bold text-(--text-main)">{label}</span>
                       </div>
 
                       {/* 2. Base Value (ดึงจาก CSV) */}
                       <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                        <span className="md:hidden text-[11px] text-[var(--text-muted)] uppercase">Base</span>
-                        <span className="text-[var(--text-main)] font-semibold text-base">{baseValue?.toLocaleString() || 0}</span>
+                        <span className="md:hidden text-[11px] text-(--text-muted) uppercase">Base</span>
+                        <span className="text-(--text-main) font-semibold text-base">{baseValue?.toLocaleString() || 0}</span>
                       </div>
 
                       {/* 3. Transcend Bonus */}
                       <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                        <span className="md:hidden text-[11px] text-[var(--text-muted)] uppercase">Trans</span>
-                        <span className="text-[var(--text-muted)] font-medium text-sm">
+                        <span className="md:hidden text-[11px] text-(--text-muted) uppercase">Trans</span>
+                        <span className="text-(--text-muted) font-medium text-sm">
                           {isSpd ? '-' : `+${transBonus.toLocaleString()}`}
                         </span>
                       </div>
 
                       {/* 4. Potential Level (Stepper) */}
                       <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                        <span className="md:hidden text-[11px] text-[var(--text-muted)] uppercase">Level</span>
+                        <span className="md:hidden text-[11px] text-(--text-muted) uppercase">Level</span>
                         {/* สำหรับ Speed เราจะทำให้จางลงและกดไม่ได้ (Disabled) */}
-                        <div className={`flex items-center bg-[var(--bg-color)] border border-[var(--border-color)] rounded-lg overflow-hidden shadow-sm h-8 w-24 ${isSpd ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
+                        <div className={`flex items-center bg-(--bg-color) border border-(--border-color) rounded-lg overflow-hidden shadow-sm h-8 w-24 ${isSpd ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
                           <button
                             onClick={() => setPotentials({ ...potentials, [statKey]: Math.max(0, potentials[statKey] - 1) })}
                             disabled={potentials[statKey] <= 0}
-                            className="w-8 h-full flex items-center justify-center text-[var(--text-main)] hover:bg-[var(--hover-bg)] active:bg-[var(--border-color)]"
+                            className="w-8 h-full flex items-center justify-center text-(--text-main) hover:bg-(--hover-bg) active:bg-(--border-color)"
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 12H4" /></svg>
                           </button>
 
                           <input
                             type="number"
-                            className="flex-1 w-full h-full text-center text-sm font-bold text-[var(--text-main)] border-x border-[var(--border-color)] bg-[var(--input-bg)] focus:outline-none"
+                            className="flex-1 w-full h-full text-center text-sm font-bold text-(--text-main) border-x border-(--border-color) bg-(--input-bg) focus:outline-none"
                             value={isSpd ? 0 : (potentials[statKey] === 0 ? '' : potentials[statKey])}
                             disabled={isSpd}
                             placeholder="0"
@@ -338,7 +338,7 @@ export default function App() {
                           <button
                             onClick={() => setPotentials({ ...potentials, [statKey]: Math.min(30, potentials[statKey] + 1) })}
                             disabled={potentials[statKey] >= 30}
-                            className="w-8 h-full flex items-center justify-center text-[var(--text-main)] hover:bg-[var(--hover-bg)] active:bg-[var(--border-color)]"
+                            className="w-8 h-full flex items-center justify-center text-(--text-main) hover:bg-(--hover-bg) active:bg-(--border-color)"
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 4v16m8-8H4" /></svg>
                           </button>
@@ -347,8 +347,8 @@ export default function App() {
 
                       {/* 5. Potential Additional Value */}
                       <div className="w-full md:w-[15%] flex justify-between md:justify-end items-center pr-2">
-                        <span className="md:hidden text-[11px] text-[var(--text-muted)] uppercase">Poten Add</span>
-                        <span className="text-[var(--accent)] font-semibold text-sm">
+                        <span className="md:hidden text-[11px] text-(--text-muted) uppercase">Poten Add</span>
+                        <span className="text-(--accent) font-semibold text-sm">
                           {isSpd ? '-' : `+${potenValue.toLocaleString()}`}
                         </span>
                       </div>
@@ -363,13 +363,13 @@ export default function App() {
 
         {/* SECTION 2: FINAL SUMMARY */}
         <div className="relative z-50 flex flex-col">
-          <div className="absolute inset-0 rounded-3xl shadow-[var(--glass-shadow)] overflow-hidden">
+          <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden">
             <div className="aurora-bg aurora-style-3"></div>
-            <div className="absolute inset-0 bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
+            <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
           </div>
           <div className="relative z-10 flex flex-col h-full">
-            <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl"><h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Final Combat Stats</h2></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
+            <div className="bg-(--card-header) p-4 border-b border-(--border-color) rounded-t-3xl"><h2 className="text-(--text-muted) font-semibold tracking-widest text-center text-xs uppercase">Final Combat Stats</h2></div>
+            <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-(--border-color)">
               {/* คอลัมน์ที่ 1 */}
               <div className="p-6 space-y-2">
                 {[
@@ -399,21 +399,21 @@ export default function App() {
                 ].map(item => (<AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />))}
               </div>
               <div className="p-6 flex flex-col h-full">
-                <div className="flex-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-2xl p-4 flex flex-col shadow-inner relative overflow-hidden">
-                  <label className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest mb-4 block text-center">Active Set Bonus</label>
+                <div className="flex-1 bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col shadow-inner relative overflow-hidden">
+                  <label className="text-[10px] text-(--text-muted) font-bold uppercase tracking-widest mb-4 block text-center">Active Set Bonus</label>
                   {finalStats.activeSetDetails && finalStats.activeSetDetails.length > 0 ? (
                     <div className="w-full space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1">
                       {finalStats.activeSetDetails.map((set, idx) => (
-                        <div key={idx} className="bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border-color)] shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-2xl p-3.5 flex flex-col gap-1.5 text-left relative overflow-hidden transition-all hover:scale-[1.02]">
-                          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--color-set)]"></div>
+                        <div key={idx} className="bg-(--card-bg) backdrop-blur-xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-2xl p-3.5 flex flex-col gap-1.5 text-left relative overflow-hidden transition-all hover:scale-[1.02]">
+                          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-(--color-set)"></div>
                           <div className="flex justify-between items-center pl-2">
-                            <span className="font-bold text-sm text-[var(--text-main)] uppercase tracking-tight">{set.name}</span><span className="text-[10px] font-bold bg-[var(--color-set)]/10 text-[var(--color-set)] px-2.5 py-1 rounded-full border border-[var(--color-set)]/20">{set.count}-Set</span>
+                            <span className="font-bold text-sm text-(--text-main) uppercase tracking-tight">{set.name}</span><span className="text-[10px] font-bold bg-(--color-set)/10 text-(--color-set) px-2.5 py-1 rounded-full border border-(--color-set)/20">{set.count}-Set</span>
                           </div>
-                          <div className="pl-2 flex flex-col mt-1 space-y-1">{set.effects.map((eff, i) => (<span key={i} className="text-[11px] font-bold text-[var(--accent)] leading-tight flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-[var(--accent)]"></div>{eff}</span>))}</div>
+                          <div className="pl-2 flex flex-col mt-1 space-y-1">{set.effects.map((eff, i) => (<span key={i} className="text-[11px] font-bold text-(--accent) leading-tight flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-(--accent)"></div>{eff}</span>))}</div>
                         </div>
                       ))}
                     </div>
-                  ) : (<div className="flex-1 flex flex-col items-center justify-center gap-2 opacity-40"><span className="text-[var(--text-muted)] font-bold text-[10px] uppercase tracking-widest">No Active Set</span></div>)}
+                  ) : (<div className="flex-1 flex flex-col items-center justify-center gap-2 opacity-40"><span className="text-(--text-muted) font-bold text-[10px] uppercase tracking-widest">No Active Set</span></div>)}
                 </div>
               </div>
             </div>

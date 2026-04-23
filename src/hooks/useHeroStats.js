@@ -84,8 +84,8 @@ export const useHeroStats = (activeHero, equipment, potentials, transcend, ring)
     const hpSetVal = Math.floor(activeHero.baseHp * paladinHpPct / 100);
     const hpRingVal = Math.floor(activeHero.baseHp * ring / 100);
 
-    const cChar = 'text-[var(--color-char)]'; const cEq = 'text-[var(--color-equip)]';
-    const cSet = 'text-[var(--color-set)]'; const cRing = 'text-[var(--color-ring)]';
+    const cChar = 'text-(--color-char)'; const cEq = 'text-(--color-equip)';
+    const cSet = 'text-(--color-set)'; const cRing = 'text-(--color-ring)';
 
     const breakdown = {
       atk: {
