@@ -1,24 +1,19 @@
 @import "tailwindcss";
 
 /* Keyframes สำหรับขยับแสงออโรร่า */
-@keyframes aurora-move {
+@keyframes aurora-flow {
   0% {
+    background-position: 0% 0%;
     transform: rotate(0deg) scale(1);
   }
 
-  25% {
-    transform: rotate(5deg) scale(1.1) translateX(10px);
-  }
-
   50% {
-    transform: rotate(0deg) scale(1) translateX(0px);
-  }
-
-  75% {
-    transform: rotate(-5deg) scale(1.1) translateY(10px);
+    background-position: 100% 100%;
+    transform: rotate(3deg) scale(1.05);
   }
 
   100% {
+    background-position: 0% 0%;
     transform: rotate(0deg) scale(1);
   }
 }
@@ -55,12 +50,12 @@
     /* Apple Gray */
 
     /* สี Aurora (Light Mode - จะจางลง) */
-    --aurora-1: rgba(52, 199, 89, 0.15);
-    /* Soft Green */
-    --aurora-2: rgba(0, 122, 255, 0.15);
-    /* Soft Blue */
-    --aurora-3: rgba(175, 82, 222, 0.1);
-    /* Soft Purple */
+    --aurora-1: rgba(52, 199, 89, 0.45);
+    /* เพิ่มความเข้ม Soft Green */
+    --aurora-2: rgba(0, 122, 255, 0.45);
+    /* เพิ่มความเข้ม Soft Blue */
+    --aurora-3: rgba(175, 82, 222, 0.35);
+    /* เพิ่มความเข้ม Soft Purple */
   }
 
   .dark {
@@ -125,9 +120,9 @@
     inset: -30px;
     z-index: -1;
     /* อยู่หลัง content */
-    opacity: 0.8;
+    opacity: 1;
     /* จุดสำคัญ: ทำให้สีฟุ้ง */
-    filter: blur(50px);
+    filter: blur(60px);
 
     /* ขยายขนาดภาพพื้นหลังเพื่อให้มีพื้นที่ให้แสงเลื่อนไปมาได้ */
     background-size: 200% 200%;

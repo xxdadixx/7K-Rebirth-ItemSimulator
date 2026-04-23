@@ -364,227 +364,243 @@ export default function App() {
         <div className="flex flex-col xl:flex-row gap-8">
 
           {/* ซ้าย: Hero Profile */}
-          <div className="relative z-40 w-full xl:w-[30%] bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] flex flex-col transition-colors duration-400 aurora-card">
-            <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl">
-              <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Hero Setup</h2>
+          <div className="relative z-[60] w-full xl:w-[30%] flex flex-col">
+
+            {/* เลเยอร์ 1: พื้นหลังและออโรร่า (มี overflow-hidden ซ่อนแสงส่วนเกิน) */}
+            <div className="absolute inset-0 bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] transition-colors duration-400 aurora-card"></div>
+
+            {/* เลเยอร์ 2: เนื้อหา (ไม่มี overflow-hidden ทำให้ Dropdown ทะลุออกมาได้) */}
+            <div className="relative z-10 flex flex-col h-full">
+
+              <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl">
+                <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Hero Setup</h2>
+              </div>
+
+              <div className="p-6 flex flex-col gap-6">
+                <div className="relative" ref={dropdownRef}>
+                  <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">
+                    Search Hero
+                  </label>
+
+                  {/* ส่วน Input แสดงชื่อตัวละครที่เลือกและใช้ค้นหา */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-2xl p-3.5 pl-10 font-semibold focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all ${getGradeColorClass(activeHero?.grade)}`}
+                      placeholder="Type to search..."
+                      value={isDropdownOpen ? searchTerm : activeHero?.name || ''}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setIsDropdownOpen(true);
+                      }}
+                      onFocus={() => {
+                        setIsDropdownOpen(true);
+                        setSearchTerm(''); // ล้างคำค้นหาเพื่อให้เห็นรายการทั้งหมดตอนเริ่มค้นใหม่
+                      }}
+                    />
+                    {/* ไอคอนแว่นขยายแบบ Apple Style */}
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* รายการตัวละครที่จะแสดงเมื่อคลิกหรือค้นหา */}
+                  {isDropdownOpen && (
+                    // เปลี่ยนพื้นหลังให้เป็น bg-[var(--bg-color)] (ทึบแสง) และตั้งค่า z-[100] ให้ลอยบนสุด
+                    <div className="absolute z-[100] w-full mt-2 max-h-72 overflow-y-auto bg-[var(--bg-color)] border border-[var(--border-color)] rounded-2xl shadow-2xl custom-scrollbar animate-in fade-in zoom-in duration-200">
+                      {filteredHeroes.length > 0 ? (
+                        filteredHeroes.map(h => (
+                          <button
+                            key={h.name}
+                            className={`w-full text-left px-4 py-3 hover:bg-[var(--hover-bg)] transition-colors flex justify-between items-center border-b border-[var(--border-color)] last:border-0 ${getGradeColorClass(h.grade)}`}
+                            onClick={() => {
+                              setSelectedHeroName(h.name);
+                              setIsDropdownOpen(false); // ปิดทันทีเมื่อเลือก
+                              setSearchTerm('');
+                            }}
+                          >
+                            <span className="font-semibold">{h.name}</span>
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getGradeBgClass(h.grade)}`}>
+                              {h.grade}
+                            </span>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-[var(--text-muted)] text-sm">No hero found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">Level</label>
+                    <div className="w-full bg-[var(--input-bg)] text-[var(--text-muted)] text-center border border-[var(--border-color)] rounded-2xl py-3 cursor-not-allowed font-semibold text-sm">
+                      30 (MAX)
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[11px] text-yellow-500 font-medium uppercase tracking-wider mb-2 block pl-1">★ Trans</label>
+                    <input type="number" min="0" max="12"
+                      className="w-full bg-[var(--input-bg)] text-[var(--text-main)] text-center border border-[var(--input-border)] rounded-2xl py-3 text-sm focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all"
+                      value={transcend} onChange={e => setTranscend(Number(e.target.value))} />
+                  </div>
+                </div>
+
+                <div className="flex justify-between gap-3 pt-4 border-t border-[var(--border-color)]">
+                  <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
+                    <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Element</div>
+                    <div className="font-semibold text-sm text-[var(--text-main)]">{activeHero.element}</div>
+                  </div>
+                  <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
+                    <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Type</div>
+                    <div className="font-semibold text-sm text-[var(--text-main)]">{activeHero.type}</div>
+                  </div>
+                  <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
+                    <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Grade</div>
+                    <div className={`font-semibold text-sm ${gradeColor}`}>{activeHero.grade}</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="p-6 flex flex-col gap-6">
-              <div className="relative" ref={dropdownRef}>
-                <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">
-                  Search Hero
-                </label>
-
-                {/* ส่วน Input แสดงชื่อตัวละครที่เลือกและใช้ค้นหา */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-2xl p-3.5 pl-10 font-semibold focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all ${getGradeColorClass(activeHero?.grade)}`}
-                    placeholder="Type to search..."
-                    value={isDropdownOpen ? searchTerm : activeHero?.name || ''}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setIsDropdownOpen(true);
-                    }}
-                    onFocus={() => {
-                      setIsDropdownOpen(true);
-                      setSearchTerm(''); // ล้างคำค้นหาเพื่อให้เห็นรายการทั้งหมดตอนเริ่มค้นใหม่
-                    }}
-                  />
-                  {/* ไอคอนแว่นขยายแบบ Apple Style */}
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* รายการตัวละครที่จะแสดงเมื่อคลิกหรือค้นหา */}
-                {isDropdownOpen && (
-                  // เปลี่ยนพื้นหลังให้เป็น bg-[var(--bg-color)] (ทึบแสง) และตั้งค่า z-[100] ให้ลอยบนสุด
-                  <div className="absolute z-[100] w-full mt-2 max-h-72 overflow-y-auto bg-[var(--bg-color)] border border-[var(--border-color)] rounded-2xl shadow-2xl custom-scrollbar animate-in fade-in zoom-in duration-200">
-                    {filteredHeroes.length > 0 ? (
-                      filteredHeroes.map(h => (
-                        <button
-                          key={h.name}
-                          className={`w-full text-left px-4 py-3 hover:bg-[var(--hover-bg)] transition-colors flex justify-between items-center border-b border-[var(--border-color)] last:border-0 ${getGradeColorClass(h.grade)}`}
-                          onClick={() => {
-                            setSelectedHeroName(h.name);
-                            setIsDropdownOpen(false); // ปิดทันทีเมื่อเลือก
-                            setSearchTerm('');
-                          }}
-                        >
-                          <span className="font-semibold">{h.name}</span>
-                          <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getGradeBgClass(h.grade)}`}>
-                            {h.grade}
-                          </span>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-[var(--text-muted)] text-sm">No hero found</div>
-                    )}
-                  </div>
-                )}
+            {/* ขวา: Base Stats & Potentials */}
+            <div className="w-full xl:w-[70%] bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] flex flex-col overflow-hidden transition-colors duration-400 aurora-card">
+              <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)]">
+                <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Base Stats & Potentials</h2>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">Level</label>
-                  <div className="w-full bg-[var(--input-bg)] text-[var(--text-muted)] text-center border border-[var(--border-color)] rounded-2xl py-3 cursor-not-allowed font-semibold text-sm">
-                    30 (MAX)
-                  </div>
+              <div className="p-6 flex flex-col gap-4">
+                <div className="hidden md:flex items-center text-[11px] text-[var(--text-muted)] font-medium px-4 pb-2 border-b border-[var(--border-color)] tracking-wider uppercase">
+                  <div className="w-1/4">Stat Type</div>
+                  <div className="w-1/5 text-center">Base</div>
+                  <div className="w-1/5 text-center">★ Transcend</div>
+                  <div className="w-1/5 text-center">Poten Lv</div>
+                  <div className="w-[15%] text-right">Poten Add</div>
                 </div>
-                <div className="flex-1">
-                  <label className="text-[11px] text-yellow-500 font-medium uppercase tracking-wider mb-2 block pl-1">★ Trans</label>
-                  <input type="number" min="0" max="12"
-                    className="w-full bg-[var(--input-bg)] text-[var(--text-main)] text-center border border-[var(--input-border)] rounded-2xl py-3 text-sm focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all"
-                    value={transcend} onChange={e => setTranscend(Number(e.target.value))} />
-                </div>
+
+                {['atk', 'def', 'hp'].map((statKey) => {
+                  const isAtk = statKey === 'atk';
+                  const isDef = statKey === 'def';
+                  const label = isAtk ? 'Attack' : isDef ? 'Defense' : 'HP';
+                  const baseValue = isAtk ? activeHero.baseAtk : isDef ? activeHero.baseDef : activeHero.baseHp;
+                  const transBonus = isAtk ? finalStats.tAtk : isDef ? finalStats.tDef : finalStats.tHp;
+                  const potenValue = isAtk ? finalStats.pAtk : isDef ? finalStats.pDef : finalStats.pHp;
+
+                  return (
+                    <div key={statKey} className="flex flex-col md:flex-row md:items-center justify-between bg-[var(--input-bg)] hover:bg-[var(--hover-bg)] transition-colors p-4 rounded-2xl border border-[var(--border-color)] gap-4 md:gap-0">
+                      <div className="flex items-center gap-3 w-full md:w-1/4">
+                        <div className={`w-1.5 h-6 rounded-full ${isAtk ? 'bg-orange-500' : isDef ? 'bg-blue-500' : 'bg-green-500'}`}></div>
+                        <span className="font-semibold text-[var(--text-main)]">{label}</span>
+                      </div>
+
+                      <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
+                        <span className="md:hidden text-[11px] text-[var(--text-muted)]">BASE</span>
+                        <span className="text-[var(--text-main)] font-semibold text-base">{baseValue.toLocaleString()}</span>
+                      </div>
+
+                      <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
+                        <span className="md:hidden text-[11px] text-[var(--text-muted)]">TRANS</span>
+                        <span className="text-[var(--text-muted)] font-medium text-sm">+{transBonus.toLocaleString()}</span>
+                      </div>
+
+                      <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
+                        <span className="md:hidden text-[11px] text-[var(--text-muted)]">LEVEL</span>
+                        <input type="number" min="0" max="30"
+                          className="w-16 bg-[var(--bg-color)] border border-[var(--input-border)] rounded-xl py-2 text-center text-sm text-[var(--text-main)] focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all"
+                          value={potentials[statKey]} onChange={e => setPotentials({ ...potentials, [statKey]: Number(e.target.value) })} />
+                      </div>
+
+                      <div className="w-full md:w-[15%] flex justify-between md:justify-end items-center pr-2">
+                        <span className="md:hidden text-[11px] text-[var(--text-muted)]">POTEN</span>
+                        <span className="text-[var(--accent)] font-semibold text-sm">+{potenValue.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: FINAL SUMMARY */}
+          <div className="relative z-50 flex flex-col">
+
+            {/* เลเยอร์ 1: พื้นหลังและออโรร่า */}
+            <div className="absolute inset-0 bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] transition-colors duration-400 aurora-card"></div>
+
+            {/* เลเยอร์ 2: เนื้อหา (ไม่โดนตัดขอบ Tooltip) */}
+            <div className="relative z-10 flex flex-col h-full">
+
+              <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl">
+                <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Final Combat Stats</h2>
               </div>
 
-              <div className="flex justify-between gap-3 pt-4 border-t border-[var(--border-color)]">
-                <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
-                  <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Element</div>
-                  <div className="font-semibold text-sm text-[var(--text-main)]">{activeHero.element}</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
+                <div className="p-6 space-y-2">
+                  {[
+                    { label: 'Attack', color: 'text-orange-500', key: 'atk' },
+                    { label: 'Defense', color: 'text-blue-500', key: 'def' },
+                    { label: 'HP', color: 'text-green-500', key: 'hp' },
+                    { label: 'Speed', color: 'text-yellow-500', key: 'spd' }
+                  ].map(item => (
+                    <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={false} textSize="text-[15px]" />
+                  ))}
                 </div>
-                <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
-                  <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Type</div>
-                  <div className="font-semibold text-sm text-[var(--text-main)]">{activeHero.type}</div>
+
+                <div className="p-6 space-y-2">
+                  {[
+                    { label: 'Crit Rate', color: 'text-red-500', key: 'critRate' },
+                    { label: 'Crit Damage', color: 'text-red-500', key: 'critDmg' },
+                    { label: 'Weakness Hit', color: 'text-purple-500', key: 'weakness' },
+                    { label: 'Block Rate', color: 'text-blue-400', key: 'block' }
+                  ].map(item => (
+                    <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />
+                  ))}
                 </div>
-                <div className="flex-1 bg-[var(--input-bg)] rounded-2xl p-3 text-center border border-[var(--border-color)]">
-                  <div className="text-[10px] text-[var(--text-muted)] mb-1 uppercase">Grade</div>
-                  <div className={`font-semibold text-sm ${gradeColor}`}>{activeHero.grade}</div>
+
+                <div className="p-6 space-y-2">
+                  {[
+                    { label: 'Dmg Reduction', color: 'text-teal-500', key: 'dmgReduc' },
+                    { label: 'Effect Hit', color: 'text-cyan-500', key: 'effHit' },
+                    { label: 'Effect Res', color: 'text-cyan-500', key: 'effRes' }
+                  ].map(item => (
+                    <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />
+                  ))}
+                </div>
+
+                <div className="p-6 flex flex-col gap-6 justify-center">
+                  <div>
+                    <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">Accessory Ring</label>
+                    <select className="w-full bg-[var(--input-bg)] text-[var(--text-main)] border border-[var(--input-border)] rounded-2xl outline-none p-3.5 focus:ring-2 focus:ring-[var(--accent)] transition-all text-sm appearance-none cursor-pointer"
+                      value={ring} onChange={e => setRing(Number(e.target.value))}>
+                      {RING_OPTIONS.map(r => <option key={r.value} value={r.value} className="bg-[var(--bg-color)]">{r.label} (+{r.value}%)</option>)}
+                    </select>
+                  </div>
+                  <div className="bg-[var(--input-bg)] border border-[var(--border-color)] rounded-2xl p-4 text-center text-[var(--accent)] whitespace-pre-line leading-relaxed h-full flex items-center justify-center font-semibold text-xs shadow-inner">
+                    {finalStats.activeSetBonus || "No Active Set Bonus"}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ขวา: Base Stats & Potentials */}
-          <div className="w-full xl:w-[70%] bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] flex flex-col overflow-hidden transition-colors duration-400 aurora-card">
-            <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)]">
-              <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Base Stats & Potentials</h2>
-            </div>
-
-            <div className="p-6 flex flex-col gap-4">
-              <div className="hidden md:flex items-center text-[11px] text-[var(--text-muted)] font-medium px-4 pb-2 border-b border-[var(--border-color)] tracking-wider uppercase">
-                <div className="w-1/4">Stat Type</div>
-                <div className="w-1/5 text-center">Base</div>
-                <div className="w-1/5 text-center">★ Transcend</div>
-                <div className="w-1/5 text-center">Poten Lv</div>
-                <div className="w-[15%] text-right">Poten Add</div>
+          {/* SECTION 3: EQUIPMENT SLOTS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-4">
+            {[
+              { title: "Weapon 1", key: "weapon1", allowed: WEAPON_MAIN_VALUES },
+              { title: "Weapon 2", key: "weapon2", allowed: WEAPON_MAIN_VALUES },
+              { title: "Armor 1", key: "armor1", allowed: ARMOR_MAIN_VALUES },
+              { title: "Armor 2", key: "armor2", allowed: ARMOR_MAIN_VALUES }
+            ].map((eq) => (
+              <div key={eq.key} className="bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl overflow-hidden shadow-[var(--glass-shadow)] hover:-translate-y-1 transition-transform duration-300">
+                <EquipmentBlock title={eq.title} data={equipment[eq.key]} allowedMains={eq.allowed} onChange={v => setEquipment({ ...equipment, [eq.key]: v })} />
               </div>
-
-              {['atk', 'def', 'hp'].map((statKey) => {
-                const isAtk = statKey === 'atk';
-                const isDef = statKey === 'def';
-                const label = isAtk ? 'Attack' : isDef ? 'Defense' : 'HP';
-                const baseValue = isAtk ? activeHero.baseAtk : isDef ? activeHero.baseDef : activeHero.baseHp;
-                const transBonus = isAtk ? finalStats.tAtk : isDef ? finalStats.tDef : finalStats.tHp;
-                const potenValue = isAtk ? finalStats.pAtk : isDef ? finalStats.pDef : finalStats.pHp;
-
-                return (
-                  <div key={statKey} className="flex flex-col md:flex-row md:items-center justify-between bg-[var(--input-bg)] hover:bg-[var(--hover-bg)] transition-colors p-4 rounded-2xl border border-[var(--border-color)] gap-4 md:gap-0">
-                    <div className="flex items-center gap-3 w-full md:w-1/4">
-                      <div className={`w-1.5 h-6 rounded-full ${isAtk ? 'bg-orange-500' : isDef ? 'bg-blue-500' : 'bg-green-500'}`}></div>
-                      <span className="font-semibold text-[var(--text-main)]">{label}</span>
-                    </div>
-
-                    <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                      <span className="md:hidden text-[11px] text-[var(--text-muted)]">BASE</span>
-                      <span className="text-[var(--text-main)] font-semibold text-base">{baseValue.toLocaleString()}</span>
-                    </div>
-
-                    <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                      <span className="md:hidden text-[11px] text-[var(--text-muted)]">TRANS</span>
-                      <span className="text-[var(--text-muted)] font-medium text-sm">+{transBonus.toLocaleString()}</span>
-                    </div>
-
-                    <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
-                      <span className="md:hidden text-[11px] text-[var(--text-muted)]">LEVEL</span>
-                      <input type="number" min="0" max="30"
-                        className="w-16 bg-[var(--bg-color)] border border-[var(--input-border)] rounded-xl py-2 text-center text-sm text-[var(--text-main)] focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all"
-                        value={potentials[statKey]} onChange={e => setPotentials({ ...potentials, [statKey]: Number(e.target.value) })} />
-                    </div>
-
-                    <div className="w-full md:w-[15%] flex justify-between md:justify-end items-center pr-2">
-                      <span className="md:hidden text-[11px] text-[var(--text-muted)]">POTEN</span>
-                      <span className="text-[var(--accent)] font-semibold text-sm">+{potenValue.toLocaleString()}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            ))}
           </div>
+
         </div>
-
-        {/* SECTION 2: FINAL SUMMARY */}
-        <div className="relative z-50 bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl shadow-[var(--glass-shadow)] transition-colors duration-400 aurora-card">
-          <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl">
-            <h2 className="text-[var(--text-muted)] font-semibold tracking-widest text-center text-xs uppercase">Final Combat Stats</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
-            <div className="p-6 space-y-2">
-              {[
-                { label: 'Attack', color: 'text-orange-500', key: 'atk' },
-                { label: 'Defense', color: 'text-blue-500', key: 'def' },
-                { label: 'HP', color: 'text-green-500', key: 'hp' },
-                { label: 'Speed', color: 'text-yellow-500', key: 'spd' }
-              ].map(item => (
-                <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={false} textSize="text-[15px]" />
-              ))}
-            </div>
-
-            <div className="p-6 space-y-2">
-              {[
-                { label: 'Crit Rate', color: 'text-red-500', key: 'critRate' },
-                { label: 'Crit Damage', color: 'text-red-500', key: 'critDmg' },
-                { label: 'Weakness Hit', color: 'text-purple-500', key: 'weakness' },
-                { label: 'Block Rate', color: 'text-blue-400', key: 'block' }
-              ].map(item => (
-                <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />
-              ))}
-            </div>
-
-            <div className="p-6 space-y-2">
-              {[
-                { label: 'Dmg Reduction', color: 'text-teal-500', key: 'dmgReduc' },
-                { label: 'Effect Hit', color: 'text-cyan-500', key: 'effHit' },
-                { label: 'Effect Res', color: 'text-cyan-500', key: 'effRes' }
-              ].map(item => (
-                <AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />
-              ))}
-            </div>
-
-            <div className="p-6 flex flex-col gap-6 justify-center">
-              <div>
-                <label className="text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-2 block pl-1">Accessory Ring</label>
-                <select className="w-full bg-[var(--input-bg)] text-[var(--text-main)] border border-[var(--input-border)] rounded-2xl outline-none p-3.5 focus:ring-2 focus:ring-[var(--accent)] transition-all text-sm appearance-none cursor-pointer"
-                  value={ring} onChange={e => setRing(Number(e.target.value))}>
-                  {RING_OPTIONS.map(r => <option key={r.value} value={r.value} className="bg-[var(--bg-color)]">{r.label} (+{r.value}%)</option>)}
-                </select>
-              </div>
-              <div className="bg-[var(--input-bg)] border border-[var(--border-color)] rounded-2xl p-4 text-center text-[var(--accent)] whitespace-pre-line leading-relaxed h-full flex items-center justify-center font-semibold text-xs shadow-inner">
-                {finalStats.activeSetBonus || "No Active Set Bonus"}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 3: EQUIPMENT SLOTS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-4">
-          {[
-            { title: "Weapon 1", key: "weapon1", allowed: WEAPON_MAIN_VALUES },
-            { title: "Weapon 2", key: "weapon2", allowed: WEAPON_MAIN_VALUES },
-            { title: "Armor 1", key: "armor1", allowed: ARMOR_MAIN_VALUES },
-            { title: "Armor 2", key: "armor2", allowed: ARMOR_MAIN_VALUES }
-          ].map((eq) => (
-            <div key={eq.key} className="bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] rounded-3xl overflow-hidden shadow-[var(--glass-shadow)] hover:-translate-y-1 transition-transform duration-300">
-              <EquipmentBlock title={eq.title} data={equipment[eq.key]} allowedMains={eq.allowed} onChange={v => setEquipment({ ...equipment, [eq.key]: v })} />
-            </div>
-          ))}
-        </div>
-
       </div>
     </div>
   );
