@@ -28,17 +28,19 @@ export const TopBar = ({ presets, onSavePreset, onLoadPreset, onDeletePreset, is
         </button>
 
         {showPresetMenu && (
-          <div className="absolute right-0 top-full mt-3 w-80 bg-(--bg-color) border border-(--border-color) rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="glass-dropdown-menu right-0 w-80">
             <div className="bg-(--card-header) p-3 border-b border-(--border-color) flex justify-between items-center">
               <h3 className="text-xs font-semibold uppercase tracking-widest text-(--text-muted)">Saved Setups</h3>
               <span className="text-[10px] bg-(--input-bg) px-2 py-1 rounded-full text-(--text-main)">{presets.length} Configs</span>
             </div>
-            <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
+            <div className="dropdown-item-hover flex items-center justify-between group p-3 rounded-xl">
               {presets.length === 0 ? (
                 <div className="text-center p-4 text-(--text-muted) text-sm">No saved presets</div>
               ) : (
                 presets.map(p => (
-                  <div key={p.id} className="flex items-center justify-between group p-2 hover:bg-(--hover-bg) rounded-xl transition-colors cursor-pointer" onClick={() => onLoadPreset(p)}>
+                  <div key={p.id}
+                    className="flex items-center justify-between group p-2 hover:bg-(--hover-bg) rounded-xl transition-colors cursor-pointer"
+                    onClick={() => onLoadPreset(p)}>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-(--text-main)">{p.name}</span>
                       <span className="text-[10px] text-(--text-muted)">Hero: {p.heroName}</span>

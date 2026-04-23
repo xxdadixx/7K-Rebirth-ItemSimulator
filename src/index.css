@@ -213,3 +213,33 @@
     animation: aurora-flow-4 8s cubic-bezier(0.25, 0.1, 0.25, 1) infinite alternate;
   }
 }
+
+/* คลาสสำหรับ Container ของ Dropdown ทุกตัว */
+.glass-dropdown-menu {
+  position: absolute;
+  z-index: 150;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  background: var(--card-bg); /* ใช้ตัวแปรเดียวกับการ์ดหลัก */
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--border-color);
+  border-radius: 1.25rem; /* 20px (rounded-2xl) */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: dropdown-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* เอฟเฟกต์เวลาเลือกรายการ */
+.dropdown-item-hover {
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+.dropdown-item-hover:hover {
+  background-color: var(--hover-bg);
+  padding-left: 1.25rem; /* ขยับนิดนึงให้ดูพรีเมียม */
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

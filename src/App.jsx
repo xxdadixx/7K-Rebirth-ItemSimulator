@@ -5,6 +5,7 @@ import { useHeroStats } from './hooks/useHeroStats';
 import { TopBar } from './components/TopBar';
 import { AnimatedStatRow } from './components/AnimatedStatRow';
 import { EquipmentSection } from './components/EquipmentSection';
+import { GlassSelect } from './components/GlassSelect';
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -165,29 +166,26 @@ export default function App() {
                     <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--text-muted)"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
                   </div>
                   {isDropdownOpen && (
-                    <div className="absolute z-100 w-full mt-2 max-h-72 overflow-y-auto bg-(--bg-color) border border-(--border-color) rounded-2xl shadow-2xl custom-scrollbar animate-in fade-in zoom-in duration-200">
-                      {filteredHeroes.length > 0 ? filteredHeroes.map(h => (
-                        <button
-                          key={h.name}
-                          className={`w-full text-left px-4 py-3 hover:bg-(--hover-bg) transition-colors flex justify-between items-center border-b border-(--border-color) last:border-0 ${getGradeColorClass(h.grade)}`}
-                          onClick={() => { setSelectedHeroName(h.name); setIsDropdownOpen(false); setSearchTerm(''); }}
-                        >
-                          <span className="font-semibold">{h.name}</span>
+                    <div className="glass-dropdown-menu w-full">
+                      {/* เพิ่ม div ด้านในเพื่อทำหน้าที่ Scroll โดยเฉพาะ */}
+                      <div className="max-h-72 overflow-y-auto custom-scrollbar py-1">
+                        {filteredHeroes.length > 0 ? filteredHeroes.map(h => (
+                          <button
+                            key={h.name}
+                            className="dropdown-item-hover w-full text-left px-5 py-3 flex justify-between items-center border-b border-(--border-color) last:border-0"
+                            onClick={() => { setSelectedHeroName(h.name); setIsDropdownOpen(false); setSearchTerm(''); }}
+                          >
+                            <span className={`font-semibold ${getGradeColorClass(h.grade)}`}>{h.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getElementBgClass(h.element)} ${getElementColorClass(h.element)}`}>{h.element}</span>
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getGradeBgClass(h.grade)}`}>{h.grade}</span>
+                            </div>
+                          </button>
+                        )) : (
+                          <div className="p-6 text-center text-(--text-muted) text-sm">No hero found</div>
+                        )}
 
-                          {/* ส่วนที่เพิ่ม: กลุ่มแสดง Element และ Grade */}
-                          <div className="flex items-center gap-2">
-                            {/* ปรับ Element ให้เป็น Badge โดยใช้ getElementBgClass และ getElementColorClass ร่วมกัน */}
-                            <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getElementBgClass(h.element)} ${getElementColorClass(h.element)}`}>
-                              {h.element}
-                            </span>
-
-                            {/* ป้าย Grade เดิม */}
-                            <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getGradeBgClass(h.grade)}`}>
-                              {h.grade}
-                            </span>
-                          </div>
-                        </button>
-                      )) : <div className="p-4 text-center text-(--text-muted) text-sm">No hero found</div>}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -230,12 +228,14 @@ export default function App() {
 
                 <div>
                   <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1">Accessory Ring</label>
-                  <div className="relative">
-                    <select className="w-full bg-(--input-bg) text-(--text-main) border border-(--input-border) rounded-2xl outline-none p-3.5 focus:ring-2 focus:ring-(--accent) transition-all text-sm appearance-none cursor-pointer font-semibold shadow-[inset_0_1px_1px_var(--glass-inner)]" value={ring} onChange={e => setRing(Number(e.target.value))}>
-                      {RING_OPTIONS.map(r => <option key={r.value} value={r.value} className="bg-(--bg-color)">{r.label} (+{r.value}%)</option>)}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-(--text-muted)"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="m19 9-7 7-7-7" /></svg></div>
-                  </div>
+                  <GlassSelect
+                    value={ring}
+                    onChange={(val) => setRing(val)}
+                    options={RING_OPTIONS.map(r => ({
+                      label: `${r.label} (+${r.value}%)`,
+                      value: r.value
+                    }))}
+                  />
                 </div>
 
                 <div className="flex justify-between gap-3 pt-4 border-t border-(--border-color)">
