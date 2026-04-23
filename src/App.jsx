@@ -22,8 +22,13 @@ export default function App() {
   const dropdownRef = useRef(null);
 
   const [presets, setPresets] = useState(() => {
-    const saved = localStorage.getItem('7k_simulator_presets');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('7k_simulator_presets');
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error("Failed to parse presets:", error);
+      return []; // ถ้าพังให้คืนค่า Array ว่างแทน เว็บจะได้ไม่ค้าง
+    }
   });
 
   const defaultSubstats = () => [
@@ -53,7 +58,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem('7k_simulator_presets', JSON.stringify(presets)); }, [presets]);
 
   useEffect(() => {
-    fetch('../public/DATA.csv')
+    fetch('/DATA.csv')
       .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.text(); })
       .then(text => {
         const parsed = parseCSVData(text);
@@ -84,6 +89,16 @@ export default function App() {
 
   const handleDeletePreset = (id, e) => { e.stopPropagation(); setPresets(presets.filter(p => p.id !== id)); };
 
+  const getElementColorClass = (element) => {
+    const el = element?.toUpperCase();
+    if (el === 'ATTACK') return 'text-red-500';
+    if (el === 'MAGIC') return 'text-blue-500';
+    if (el === 'UNIVERSAL') return 'text-purple-500';
+    if (el === 'DEFENSE') return 'text-amber-700';
+    if (el === 'SUPPORT') return 'text-yellow-500';
+    return 'text-[var(--text-main)]';
+  };
+
   const getElementBgClass = (element) => {
     const el = element?.toUpperCase();
     if (el === 'ATTACK') return 'bg-red-500/10 border-red-500/30';
@@ -93,15 +108,27 @@ export default function App() {
     if (el === 'SUPPORT') return 'bg-yellow-500/10 border-yellow-500/30';
     return 'bg-gray-500/10 border-gray-500/30';
   };
+
   const getTypeColorClass = (t) => {
     const type = t?.toUpperCase();
-    if (type === 'ATTACK') return 'text-red-500'; if (type === 'MAGIC') return 'text-blue-500'; return 'text-[var(--text-main)]';
+    if (type === 'ATTACK') return 'text-red-500';
+    if (type === 'MAGIC') return 'text-blue-500';
+    return 'text-[var(--text-main)]';
   };
-  const getTransColorClass = (val) => { if (val >= 7) return 'text-red-500'; if (val >= 1) return 'text-blue-500'; return 'text-[var(--text-main)]'; };
+
+  const getTransColorClass = (val) => {
+    if (val >= 7) return 'text-red-500';
+    if (val >= 1) return 'text-blue-500';
+    return 'text-[var(--text-main)]';
+  };
+
   const getGradeColorClass = (grade) => {
     const g = grade?.toUpperCase();
-    if (g === 'LEGEND') return 'text-[var(--color-legend)]'; if (g === 'RARE') return 'text-[var(--color-rare)]'; return 'text-[var(--color-normal)]';
+    if (g === 'LEGEND') return 'text-[var(--color-legend)]';
+    if (g === 'RARE') return 'text-[var(--color-rare)]';
+    return 'text-[var(--color-normal)]';
   };
+
   const getGradeBgClass = (grade) => {
     const g = grade?.toUpperCase();
     if (g === 'LEGEND') return 'bg-[var(--color-legend)]/10 border-[var(--color-legend)]/30';
@@ -114,17 +141,17 @@ export default function App() {
   if (!activeHero) return <div className="p-10">No character data available.</div>;
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-10 selection:bg-[var(--accent)] selection:text-white transition-colors duration-400">
+    <div className="min-h-screen p-4 md:p-6 lg:p-10 selection:bg-(--accent) selection:text-white transition-colors duration-400">
       <div className="max-w-[1400px] mx-auto space-y-8 relative">
 
         <TopBar presets={presets} onSavePreset={handleSavePreset} onLoadPreset={handleLoadPreset} onDeletePreset={handleDeletePreset} isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
 
         <div className="flex flex-col xl:flex-row gap-8">
           {/* ซ้าย: Hero Profile */}
-          <div className="relative z-[60] w-full xl:w-[30%] flex flex-col">
-            <div className="absolute inset-0 rounded-3xl shadow-[var(--glass-shadow)] overflow-hidden">
+          <div className="relative z-60 w-full xl:w-[30%] flex flex-col">
+            <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden">
               <div className="aurora-bg aurora-style-1"></div>
-              <div className="absolute inset-0 bg-[var(--card-bg)] backdrop-blur-3xl border border-[var(--border-color)] shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
+              <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-[var(--border-color)] shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
             </div>
             <div className="relative z-10 flex flex-col h-full">
               <div className="bg-[var(--card-header)] p-4 border-b border-[var(--border-color)] rounded-t-3xl">
