@@ -4,7 +4,7 @@ import { parseCSVData, getValidationStatus, getTransColorClass } from './utils/h
 import { useHeroStats } from './hooks/useHeroStats';
 import { TopBar } from './components/TopBar';
 import { AnimatedStatRow } from './components/AnimatedStatRow';
-import { EquipmentSection } from './components/EquipmentSection';
+import EquipmentSection from './components/EquipmentSection';
 import { GlassSelect } from './components/GlassSelect';
 
 export default function App() {
@@ -15,7 +15,7 @@ export default function App() {
   const [error, setError] = useState(null);
 
   const [transcend, setTranscend] = useState(6);
-  const [ring, setRing] = useState(6);
+  const [ring, setRing] = useState(10);
   const [potentials, setPotentials] = useState({ atk: 0, def: 0, hp: 0, spd: 0 });
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -136,7 +136,7 @@ export default function App() {
   if (!activeHero) return <div className="p-10">No character data available.</div>;
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-10 selection:bg-(--accent) selection:text-white transition-colors duration-400">
+    <div className="min-h-screen p-4 md:p-6 lg:p-10 pb-48 selection:bg-(--accent) selection:text-white transition-colors duration-400">
       <div className="max-w-[1400px] mx-auto space-y-8 relative">
 
         <TopBar presets={presets} onSavePreset={handleSavePreset} onLoadPreset={handleLoadPreset} onDeletePreset={handleDeletePreset} isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
@@ -413,6 +413,9 @@ export default function App() {
 
         {/* SECTION 3: EQUIPMENT SLOTS (Component แยก) */}
         <EquipmentSection equipment={equipment} setEquipment={setEquipment} validationMsg={validationMsg} />
+
+        {/* เพิ่มกล่องเปล่า (Spacer) ตรงนี้ เพื่อดันให้เว็บมีพื้นที่ด้านล่างเหลือสำหรับ Dropdown */}
+        <div className="h-64 w-full shrink-0 pointer-events-none"></div>
 
       </div>
     </div>
