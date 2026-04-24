@@ -147,6 +147,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-10 pb-48 selection:bg-(--accent) selection:text-white transition-colors duration-400">
+      <div className="arcade-grid-bg"></div>
+      <div className="crt-overlay"></div>
+
       <div className="max-w-[1400px] mx-auto space-y-8 relative">
 
         <TopBar presets={presets} onSavePreset={handleSavePreset} onLoadPreset={handleLoadPreset} onDeletePreset={handleDeletePreset} isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
@@ -299,8 +302,7 @@ export default function App() {
                       {/* 2. Base Value (ดึงจาก CSV) */}
                       <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
                         <span className="md:hidden text-[11px] text-(--text-muted) uppercase">Base</span>
-                        {/* เปลี่ยนเป็นคลาส arcade-value-mini */}
-                        <span className="arcade-value-mini">
+                        <span className={`arcade-value-mini ${isDarkMode ? '' : '!text-slate-700 ![text-shadow:none]'}`}>
                           {baseValue?.toLocaleString() || 0}
                         </span>
                       </div>
@@ -309,8 +311,8 @@ export default function App() {
                       <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
                         <span className="md:hidden text-[11px] text-(--text-muted) uppercase">Trans</span>
                         <span
-                          key={transBonus} /* <--- เพิ่ม key */
-                          className="arcade-value-bonus text-[#00bfff] animate-value-change" /* <--- เพิ่ม animate */
+                          key={transBonus}
+                          className={`animate-value-change transition-colors ${isDarkMode ? 'arcade-value-bonus text-[#00bfff]' : 'text-blue-700 font-bold text-base'}`}
                         >
                           {isSpd ? '-' : `+${transBonus.toLocaleString()}`}
                         </span>
@@ -329,10 +331,10 @@ export default function App() {
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 12H4" /></svg>
                           </button>
 
-                          {/* ช่อง Input ที่พิมพ์ได้ แต่ไม่มีลูกศร และตัวเลขเรืองแสงแบบ Arcade */}
+                          {/* ช่อง Input ที่พิมพ์ได้ */}
                           <input
                             type="number"
-                            className="flex-1 w-full h-full text-center bg-(--input-bg) border-x border-(--border-color) focus:outline-none hide-spin-button arcade-value-mini !text-[16px]"
+                            className={`flex-1 w-full h-full text-center bg-(--input-bg) border-x border-(--border-color) focus:outline-none hide-spin-button !text-[16px] transition-colors ${isDarkMode ? 'arcade-value-mini' : 'text-slate-800 font-bold'}`}
                             value={isSpd ? 0 : (potentials[statKey] === 0 ? '' : potentials[statKey])}
                             disabled={isSpd}
                             placeholder="0"
@@ -341,6 +343,12 @@ export default function App() {
                               if (isNaN(val) || val < 0) val = 0;
                               if (val > 30) val = 30; // ล็อกไม่ให้พิมพ์เกิน 30
                               setPotentials({ ...potentials, [statKey]: val });
+                            }}
+                            // เพิ่ม onKeyDown เพื่อสกัดกั้นการพิมพ์เครื่องหมายต่างๆ ทิ้งไปก่อนที่จะลงกล่อง
+                            onKeyDown={(e) => {
+                              if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                e.preventDefault();
+                              }
                             }}
                           />
 
@@ -359,8 +367,8 @@ export default function App() {
                       <div className="w-full md:w-[15%] flex justify-between md:justify-end items-center pr-2">
                         <span className="md:hidden text-[11px] text-(--text-muted) uppercase">Poten Add</span>
                         <span
-                          key={potenValue} /* <--- เพิ่ม key */
-                          className="arcade-value-bonus text-[#ffd700] animate-value-change" /* <--- เพิ่ม animate */
+                          key={potenValue}
+                          className={`animate-value-change transition-colors ${isDarkMode ? 'arcade-value-bonus text-[#ffd700]' : 'text-amber-700 font-bold text-base'}`}
                         >
                           {isSpd ? '-' : `+${potenValue.toLocaleString()}`}
                         </span>
@@ -406,7 +414,7 @@ export default function App() {
               <div className="p-6 space-y-2">
                 {[
                   { label: 'Block Rate', color: 'text-blue-400', key: 'block', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4" /></svg> },
-                  { label: 'Dmg Reduction', color: 'text-teal-500', key: 'dmgReduc', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v8M9 13l3 3 3-3" /></svg> },
+                  { label: 'Dmg Reduction', color: 'text-blue-400', key: 'dmgReduc', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v8M9 13l3 3 3-3" /></svg> },
                   { label: 'Effect Hit', color: 'text-cyan-500', key: 'effHit', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 3l2.286 6.857L22 12l-6.714 2.143L13 21l-2.286-6.857L4 12l6.714-2.143L13 3z" /></svg> },
                   { label: 'Effect Res', color: 'text-cyan-500', key: 'effRes', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg> }
                 ].map(item => (<AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />))}

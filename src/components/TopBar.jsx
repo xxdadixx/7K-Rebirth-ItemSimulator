@@ -33,19 +33,29 @@ export const TopBar = ({ presets, onSavePreset, onLoadPreset, onDeletePreset, is
               <h3 className="text-xs font-semibold uppercase tracking-widest text-(--text-muted)">Saved Setups</h3>
               <span className="text-[10px] bg-(--input-bg) px-2 py-1 rounded-full text-(--text-main)">{presets.length} Configs</span>
             </div>
-            <div className="dropdown-item-hover flex items-center justify-between group p-3 rounded-xl">
+            {/* แก้ไขคลาสของ Container ให้เป็นแค่พื้นที่ Scroll แนวตั้ง */}
+            <div className="p-2 max-h-60 overflow-y-auto custom-scrollbar space-y-1">
               {presets.length === 0 ? (
                 <div className="text-center p-4 text-(--text-muted) text-sm">No saved presets</div>
               ) : (
                 presets.map(p => (
                   <div key={p.id}
+                    /* คลาส group สำหรับ Hover จะอยู่แค่ระดับของแต่ละ Item เท่านั้น */
                     className="flex items-center justify-between group p-2 hover:bg-(--hover-bg) rounded-xl transition-colors cursor-pointer"
                     onClick={() => onLoadPreset(p)}>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-(--text-main)">{p.name}</span>
                       <span className="text-[10px] text-(--text-muted)">Hero: {p.heroName}</span>
                     </div>
-                    <button onClick={(e) => onDeletePreset(p.id, e)} className="text-red-500 opacity-0 group-hover:opacity-100 hover:scale-110 transition-all p-1" title="Delete Preset">
+                    <button
+                      /* เพิ่ม e.stopPropagation() เพื่อไม่ให้เผลอไปกดโหลด Preset ตอนตั้งใจจะลบ */
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeletePreset(p.id, e);
+                      }}
+                      className="text-red-500 opacity-0 group-hover:opacity-100 hover:scale-110 transition-all p-1"
+                      title="Delete Preset"
+                    >
                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                   </div>

@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 /* ชุด Keyframes แสง 4 แบบ */
 @keyframes aurora-flow-1 {
@@ -303,19 +302,19 @@
 
 /* กรอบหน้าจอดำสำหรับใส่ตัวเลข (เหมือนจอ LED) */
 .arcade-led-board {
-  background: #0a0a0a;
-  border: 2px solid #222;
+  background: rgba(0, 0, 0, 0.03); /* สีเทาใสๆ */
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05); /* เงาตกกระทบด้านในเบาๆ */
   padding: 4px 12px;
   display: inline-flex;
   justify-content: center;
   align-items: center;
   position: relative;
   overflow: hidden;
+  transition: all 0.4s ease;
 }
 
-/* เพิ่มเส้นแสงสแกน (Scanline) จางๆ บนกรอบตัวเลข */
 .arcade-led-board::after {
   content: "";
   position: absolute;
@@ -328,30 +327,61 @@
     transparent 4px
   );
   pointer-events: none;
+  opacity: 0; /* ปิดใน Light Mode */
+  transition: opacity 0.4s ease;
+}
+
+.dark .arcade-led-board::after {
+  opacity: 1; /* เปิดใน Dark Mode */
+}
+
+/* ปรับแต่ง Container ของตู้ LED สำหรับ Main Stat ให้ดูสมดุล */
+.arcade-led-board.min-w-\[100px\] {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-color);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 4px 8px;
+  display: flex;
+}
+
+/* --- สำหรับ Dark Mode (หน้าจอ LED ดำมืดดุดันเหมือนเดิม) --- */
+.dark .arcade-led-board {
+  background: #0a0a0a;
+  border: 2px solid #222;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px rgba(255, 255, 255, 0.05);
+}
+
+.dark .arcade-led-board.min-w-\[100px\] {
+  background-color: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(30, 41, 59, 0.5);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* สไตล์ตัวเลข Main Stat (ใหญ่สะใจ สีทอง/เหลืองนีออน) */
 .arcade-value-main {
-  font-family: 'VT323', monospace;
-  font-size: 3rem; /* ใหญ่มาก (ประมาณ 48px) */
+  /* ใช้ฟอนต์ 8-bit พิกเซลหนา */
+  font-family: 'Press Start 2P', monospace;
+  
+  /* ขนาดใหญ่กว่า sub (0.85rem) แต่เล็กกว่า final (1.1rem) */
+  font-size: 0.95rem; 
+  
+  color: #34d399; /* เขียวนีออน */
+  text-shadow: 0 0 5px rgba(52, 211, 153, 0.7),
+               0 0 10px rgba(52, 211, 153, 0.3);
   line-height: 1;
-  color: #ffd700;
-  text-shadow: 0 0 5px #ffd700, 0 0 15px #ff8c00, 0 0 20px #ff8c00;
-  letter-spacing: 2px;
-  position: relative;
-  z-index: 10;
+  display: inline-block;
 }
 
-/* สไตล์ตัวเลข Sub Stat (ขนาดรองลงมา สีฟ้านีออน) */
 .arcade-value-sub {
-  font-family: 'VT323', monospace;
-  font-size: 1.75rem; /* ขนาดใหญ่กำลังดี (ประมาณ 28px) */
+  /* อัปเดตให้ใช้เครื่องหมายคำพูดชุดเดียว และตรงกับชื่อฟอนต์ที่ Import มา */
+  font-family: 'Press Start 2P', monospace;
+  
+  /* แนะนำให้ลดขนาดลงให้เล็กกว่า Final Stats (เช่น 0.8rem หรือ 0.85rem) */
+  font-size: 0.85rem; 
+  
+  color: #34d399;
+  text-shadow: 0 0 5px rgba(52, 211, 153, 0.7);
   line-height: 1;
-  color: #00ffff;
-  text-shadow: 0 0 5px #00ffff, 0 0 10px #00bfff;
-  letter-spacing: 1px;
-  position: relative;
-  z-index: 10;
 }
 
 /* ตัวเลข Base Stat (สีขาวเรืองแสง) */
@@ -371,6 +401,100 @@
   line-height: 1;
   text-shadow: 0 0 8px currentColor; /* ดึงสีเรืองแสงจากสีของ text-color ปัจจุบัน */
   letter-spacing: 1px;
+}
+
+/* Arcade Theme for Final Stats */
+.arcade-led-final {
+  background-color: #0f172a;
+  border: 2px solid #1e293b;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem; /* ลด padding ให้บางลง */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6),
+              0 0 8px rgba(16, 185, 129, 0.2);
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: auto; /* ปลดล็อก min-width ให้ยืดหยุ่นตามตัวเลข */
+}
+
+.arcade-value-final {
+  font-family: 'Press Start 2P', monospace;
+  
+  /* ใส่สีและแสงให้เหมือนกับ .arcade-value-main และ .arcade-value-sub เป๊ะๆ */
+  color: #34d399; 
+  text-shadow: 0 0 5px rgba(52, 211, 153, 0.7),
+               0 0 10px rgba(52, 211, 153, 0.5);
+}
+
+@media (max-width: 1180px) {
+  .arcade-value-final {
+    font-size: 0.8rem;
+  }
+  .arcade-led-final {
+    padding: 3px 6px;
+  }
+}
+
+/* Flashing effect for when stats change */
+.arcade-flash-final {
+  animation: finalStatFlash 0.5s ease-out;
+}
+
+@keyframes finalStatFlash {
+  0% { text-shadow: 0 0 20px #fff, 0 0 30px #34d399; color: #fff; transform: scale(1.1); }
+  100% { text-shadow: 0 0 5px rgba(52, 211, 153, 0.7), 0 0 10px rgba(52, 211, 153, 0.5); color: #34d399; transform: scale(1); }
+}
+
+/* Animated Neon Grid Background */
+.arcade-grid-bg {
+  position: fixed;
+  inset: 0;
+  /* ขยายขนาดช่องให้กว้างขึ้น ลดความหนาแน่น */
+  background-size: 60px 60px; 
+  /* ปรับให้ขยับช้าลงเล็กน้อย ไม่ให้ตาลาย */
+  animation: scrollGrid 4s linear infinite; 
+  z-index: -1;
+  
+  /* --- Light Mode --- */
+  background-color: #f8fafc; /* พื้นสว่างแบบสะอาดตา */
+  /* ลดความเข้มของเส้นตารางเหลือแค่ 2% (0.02) ให้ดูเป็นลายน้ำจางๆ */
+  background-image: 
+    linear-gradient(rgba(15, 23, 42, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.02) 1px, transparent 1px);
+  transition: background-color 0.4s ease, background-image 0.4s ease;
+}
+
+.dark .arcade-grid-bg {
+  background-color: #080c14; 
+  background-image: 
+    linear-gradient(rgba(52, 211, 153, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 211, 153, 0.15) 1px, transparent 1px);
+  background-size: 50px 50px; 
+}
+
+@keyframes scrollGrid {
+  0% { background-position: 0px 0px; }
+  100% { background-position: 50px 50px; }
+}
+
+/* CRT Monitor Scanline Effect (แถมให้เพื่อความสมจริง) */
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+  background-size: 100% 4px;
+  z-index: 9999;
+  pointer-events: none;
+  
+  /* ปิดการแสดงผลใน Light Mode */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.dark .crt-overlay {
+  opacity: 1;
+  visibility: visible;
 }
 
 @keyframes cyber-glitch-snap {
