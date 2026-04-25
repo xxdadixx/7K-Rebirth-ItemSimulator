@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { RING_OPTIONS } from './utils/constants';
 import { parseCSVData, getValidationStatus, getTransColorClass } from './utils/helpers';
 import { useHeroStats } from './hooks/useHeroStats';
@@ -124,33 +124,34 @@ export default function App() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
-  const handleToggleSnapshot = () => {
-    if (snapshotStats) {
-      setSnapshotStats(null); 
-    } else {
-      setSnapshotStats(JSON.parse(JSON.stringify(finalStats.breakdown)));
-    }
-  };
+  const handleToggleSnapshot = useCallback(() => {
+    setSnapshotStats(prev => prev ? null : JSON.parse(JSON.stringify(finalStats.breakdown)));
+  }, [finalStats]);
 
-  const handleSavePreset = (nameInput) => {
+  const handleSavePreset = useCallback((nameInput) => {
     if (!activeHero) return;
-    const name = nameInput.trim() || `${activeHero.name} Setup`;
-    const newPreset = { id: Date.now().toString(), name, heroName: selectedHeroName, transcend, ring, potentials, equipment };
-    setPresets([newPreset, ...presets]);
-  };
+    setPresets(prev => {
+      const name = nameInput.trim() || `${activeHero.name} Setup`;
+      const newPreset = { id: Date.now().toString(), name, heroName: selectedHeroName, transcend, ring, potentials, equipment };
+      return [newPreset, ...prev];
+    });
+  }, [activeHero, selectedHeroName, transcend, ring, potentials, equipment]);
 
-  const handleLoadPreset = (preset) => {
+  const handleLoadPreset = useCallback((preset) => {
     setSelectedHeroName(preset.heroName); setTranscend(preset.transcend);
     setRing(preset.ring); setPotentials(preset.potentials); setEquipment(preset.equipment);
-  };
+  }, []);
 
-  const handleDeletePreset = (id, e) => {
+  const handleDeletePreset = useCallback((id, e) => {
     e.stopPropagation(); 
-    const isConfirmed = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบ Preset นี้?\n(ข้อมูลที่ลบไปแล้วจะไม่สามารถกู้คืนได้)");
-    if (isConfirmed) {
-      setPresets(presets.filter(p => p.id !== id));
+    if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบ Preset นี้?\n(ข้อมูลที่ลบไปแล้วจะไม่สามารถกู้คืนได้)")) {
+      setPresets(prev => prev.filter(p => p.id !== id));
     }
-  };
+  }, []);
+
+  const handlePotentialChange = useCallback((statKey, val) => {
+    setPotentials(prev => ({ ...prev, [statKey]: Math.max(0, Math.min(30, val)) }));
+  }, []);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
@@ -404,9 +405,9 @@ export default function App() {
                       <div className="w-full md:w-1/5 flex justify-between md:justify-center items-center">
                         <span className="md:hidden text-[11px] text-(--text-muted) uppercase">Level</span>
                         <div className={`flex items-center bg-(--bg-color) border border-(--border-color) rounded-lg overflow-hidden shadow-sm h-8 w-24 ${isSpd ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
-                          <button
+                        <button
                             type="button"
-                            onClick={() => setPotentials({ ...potentials, [statKey]: Math.max(0, potentials[statKey] - 1) })}
+                            onClick={() => handlePotentialChange(statKey, potentials[statKey] - 1)}
                             disabled={potentials[statKey] <= 0}
                             className="w-8 h-full flex items-center justify-center text-(--text-main) hover:bg-(--hover-bg) active:bg-(--border-color)"
                           >
@@ -421,9 +422,8 @@ export default function App() {
                             placeholder="0"
                             onChange={(e) => {
                               let val = parseInt(e.target.value, 10);
-                              if (isNaN(val) || val < 0) val = 0;
-                              if (val > 30) val = 30; 
-                              setPotentials({ ...potentials, [statKey]: val });
+                              if (isNaN(val)) val = 0;
+                              handlePotentialChange(statKey, val);
                             }}
                             onKeyDown={(e) => {
                               if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
@@ -432,9 +432,9 @@ export default function App() {
                             }}
                           />
 
-                          <button
+<button
                             type="button"
-                            onClick={() => setPotentials({ ...potentials, [statKey]: Math.min(30, potentials[statKey] + 1) })}
+                            onClick={() => handlePotentialChange(statKey, potentials[statKey] + 1)}
                             disabled={potentials[statKey] >= 30}
                             className="w-8 h-full flex items-center justify-center text-(--text-main) hover:bg-(--hover-bg) active:bg-(--border-color)"
                           >

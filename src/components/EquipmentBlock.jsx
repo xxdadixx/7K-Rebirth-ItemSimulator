@@ -3,18 +3,16 @@ import { SET_OPTIONS, SUBSTAT_BASES } from '../utils/constants';
 import { getSubstatValue, formatStatValue } from '../utils/helpers';
 import { GlassSelect } from './GlassSelect';
 
-export const EquipmentBlock = ({ title, data, allowedMains, onChange, heroType, isWeapon }) => {
+// 🌟 OPTIMIZATION: Wrapped EquipmentBlock in React.memo
+export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange, heroType, isWeapon }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const dropdownRef = useRef(null);
 
-  // 🌟 OPTIMIZATION: Attach event listener ONLY when the dropdown is open
   useEffect(() => {
     if (!isDropdownOpen) return;
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsDropdownOpen(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -23,7 +21,6 @@ export const EquipmentBlock = ({ title, data, allowedMains, onChange, heroType, 
   const usedRolls = data.substats.reduce((sum, sub) => sum + sub.rolls, 0);
   const remainingRolls = 5 - usedRolls;
 
-  // 🌟 OPTIMIZATION: Memoize the function to prevent recreation
   const getEquipmentImage = useCallback((setName) => {
     if (!setName || setName === 'None') return null;
     if (isWeapon) {
@@ -34,21 +31,19 @@ export const EquipmentBlock = ({ title, data, allowedMains, onChange, heroType, 
     }
   }, [heroType, isWeapon]);
 
-  const updateMainStat = (typeStr) => {
+  const updateMainStat = useCallback((typeStr) => {
     let newValue = data.mainStat.value;
-    if (allowedMains && allowedMains[typeStr] !== undefined) {
-      newValue = allowedMains[typeStr];
-    }
+    if (allowedMains && allowedMains[typeStr] !== undefined) newValue = allowedMains[typeStr];
     onChange({ ...data, mainStat: { type: typeStr, value: newValue } });
-  };
+  }, [data, allowedMains, onChange]);
 
-  const updateSubstatType = (index, typeStr) => {
+  const updateSubstatType = useCallback((index, typeStr) => {
     const newSubs = [...data.substats];
     newSubs[index].type = typeStr;
     onChange({ ...data, substats: newSubs });
-  };
+  }, [data, onChange]);
 
-  const updateSubstatRolls = (index, rollStr) => {
+  const updateSubstatRolls = useCallback((index, rollStr) => {
     let newVal = parseInt(rollStr, 10);
     if (isNaN(newVal) || newVal < 0) newVal = 0;
     const currentRolls = data.substats[index].rolls;
@@ -57,7 +52,7 @@ export const EquipmentBlock = ({ title, data, allowedMains, onChange, heroType, 
     const newSubs = [...data.substats];
     newSubs[index].rolls = newVal;
     onChange({ ...data, substats: newSubs });
-  };
+  }, [data, usedRolls, onChange]);
 
   const mainStatKeys = allowedMains ? Object.keys(allowedMains) : Object.keys(SUBSTAT_BASES);
 
@@ -156,21 +151,21 @@ export const EquipmentBlock = ({ title, data, allowedMains, onChange, heroType, 
                             <button
                               key={s}
                               type="button"
-                              onClick={() => { onChange({...data, set: s}); setIsDropdownOpen(false); }}
+                              onClick={() => { onChange({ ...data, set: s }); setIsDropdownOpen(false); }}
                               className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 hover:z-10 hover:shadow-lg group bg-black/10 dark:bg-black/40 ${data.set === s ? 'border-(--accent) ring-2 ring-(--accent)/50' : 'border-transparent hover:border-(--border-color)'}`}
                             >
                               {imgSrc ? (
-                                <img 
-                                  src={imgSrc} 
-                                  alt={s} 
+                                <img
+                                  src={imgSrc}
+                                  alt={s}
                                   loading="lazy"
                                   decoding="async"
                                   className="w-full h-full object-contain p-1 group-hover:scale-110 group-hover:brightness-110 transition-transform duration-300"
-                                  onError={(e) => { 
-                                    e.target.onerror = null; 
-                                    e.target.src = '/favicon.svg'; 
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = '/favicon.svg';
                                     e.target.className = 'w-6 h-6 m-auto opacity-20 grayscale mt-4';
-                                  }} 
+                                  }}
                                 />
                               ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center opacity-40 bg-black/5 dark:bg-white/5">
@@ -278,4 +273,4 @@ export const EquipmentBlock = ({ title, data, allowedMains, onChange, heroType, 
       </div>
     </div>
   );
-};
+});
