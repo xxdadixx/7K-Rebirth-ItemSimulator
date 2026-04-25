@@ -167,7 +167,7 @@ export default function App() {
 
         <div className="flex flex-col xl:flex-row gap-8">
           {/* ซ้าย: Hero Profile */}
-          <div className="relative z-60 w-full xl:w-[30%] flex flex-col">
+          <div className="relative z-30 w-full xl:w-[30%] flex flex-col">
             <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden">
               <div className="aurora-bg aurora-style-1"></div>
               <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
@@ -359,7 +359,7 @@ export default function App() {
           </div>
 
           {/* ขวา: Base Stats & Potentials */}
-          <div className="relative z-40 w-full xl:w-[70%] flex flex-col">
+          <div className="relative z-30 w-full xl:w-[70%] flex flex-col">
             <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden">
               <div className="aurora-bg aurora-style-2"></div>
               <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
@@ -492,7 +492,7 @@ export default function App() {
                     {/* กล่องรวม ATK */}
                     <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
                       <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/15 transition-colors"></div>
-                      <span className="text-xs md:text-sm font-bold text-red-500 mb-3 uppercase tracking-widest">Attack</span>
+                      <span className="text-xs md:text-sm font-bold text-red-500 mb-2 uppercase tracking-widest">Attack</span>
                       <span
                         key={((activeHero.baseAtk || 0) + (finalStats.tAtk || 0) + (finalStats.pAtk || 0))}
                         className={`animate-value-change transition-colors tracking-widest ${isDarkMode ? 'text-red-400 ![text-shadow:0_0_8px_currentColor]' : '!text-red-700 ![text-shadow:none]'}`}
@@ -500,12 +500,20 @@ export default function App() {
                       >
                         {((activeHero.baseAtk || 0) + (finalStats.tAtk || 0) + (finalStats.pAtk || 0)).toLocaleString()}
                       </span>
+                      {/* โชว์ส่วนต่าง (+) จาก Trans และ Poten */}
+                      <div className="h-3 mt-1.5 flex items-center justify-center">
+                        {((finalStats.tAtk || 0) + (finalStats.pAtk || 0)) > 0 && (
+                          <span className="text-emerald-500 font-bold tracking-widest drop-shadow-[0_0_2px_rgba(16,185,129,0.5)]" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '0.55rem' }}>
+                            (+{((finalStats.tAtk || 0) + (finalStats.pAtk || 0)).toLocaleString()})
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* กล่องรวม DEF */}
                     <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
                       <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/15 transition-colors"></div>
-                      <span className="text-xs md:text-sm font-bold text-blue-500 mb-3 uppercase tracking-widest">Defense</span>
+                      <span className="text-xs md:text-sm font-bold text-blue-500 mb-2 uppercase tracking-widest">Defense</span>
                       <span
                         key={((activeHero.baseDef || 0) + (finalStats.tDef || 0) + (finalStats.pDef || 0))}
                         className={`animate-value-change transition-colors tracking-widest ${isDarkMode ? 'text-blue-400 ![text-shadow:0_0_8px_currentColor]' : '!text-blue-700 ![text-shadow:none]'}`}
@@ -513,12 +521,20 @@ export default function App() {
                       >
                         {((activeHero.baseDef || 0) + (finalStats.tDef || 0) + (finalStats.pDef || 0)).toLocaleString()}
                       </span>
+                      {/* โชว์ส่วนต่าง (+) จาก Trans และ Poten */}
+                      <div className="h-3 mt-1.5 flex items-center justify-center">
+                        {((finalStats.tDef || 0) + (finalStats.pDef || 0)) > 0 && (
+                          <span className="text-emerald-500 font-bold tracking-widest drop-shadow-[0_0_2px_rgba(16,185,129,0.5)]" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '0.55rem' }}>
+                            (+{((finalStats.tDef || 0) + (finalStats.pDef || 0)).toLocaleString()})
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* กล่องรวม HP */}
                     <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
                       <div className="absolute inset-0 bg-green-500/5 group-hover:bg-green-500/15 transition-colors"></div>
-                      <span className="text-xs md:text-sm font-bold text-green-500 mb-3 uppercase tracking-widest">HP</span>
+                      <span className="text-xs md:text-sm font-bold text-green-500 mb-2 uppercase tracking-widest">HP</span>
                       <span
                         key={((activeHero.baseHp || 0) + (finalStats.tHp || 0) + (finalStats.pHp || 0))}
                         className={`animate-value-change transition-colors tracking-widest ${isDarkMode ? 'text-green-400 ![text-shadow:0_0_8px_currentColor]' : '!text-green-700 ![text-shadow:none]'}`}
@@ -526,12 +542,20 @@ export default function App() {
                       >
                         {((activeHero.baseHp || 0) + (finalStats.tHp || 0) + (finalStats.pHp || 0)).toLocaleString()}
                       </span>
+                      {/* โชว์ส่วนต่าง (+) จาก Trans และ Poten */}
+                      <div className="h-3 mt-1.5 flex items-center justify-center">
+                        {((finalStats.tHp || 0) + (finalStats.pHp || 0)) > 0 && (
+                          <span className="text-emerald-500 font-bold tracking-widest drop-shadow-[0_0_2px_rgba(16,185,129,0.5)]" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '0.55rem' }}>
+                            (+{((finalStats.tHp || 0) + (finalStats.pHp || 0)).toLocaleString()})
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* กล่องรวม SPD */}
+                    {/* กล่องรวม SPD (ไม่มีโบนัสในส่วนนี้) */}
                     <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
                       <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/15 transition-colors"></div>
-                      <span className="text-xs md:text-sm font-bold text-yellow-500 mb-3 uppercase tracking-widest">Speed</span>
+                      <span className="text-xs md:text-sm font-bold text-yellow-500 mb-2 uppercase tracking-widest">Speed</span>
                       <span
                         key={(activeHero.baseSpd || 0)}
                         className={`animate-value-change transition-colors tracking-widest ${isDarkMode ? 'text-[#ffd700] ![text-shadow:0_0_8px_currentColor]' : '!text-amber-700 ![text-shadow:none]'}`}
@@ -539,6 +563,7 @@ export default function App() {
                       >
                         {(activeHero.baseSpd || 0).toLocaleString()}
                       </span>
+                      <div className="h-3 mt-1.5"></div>
                     </div>
                   </div>
                 </div>
@@ -561,26 +586,40 @@ export default function App() {
             <div className="bg-(--card-header) p-3 sm:p-4 border-b border-(--border-color) rounded-t-3xl flex justify-between items-center">
               <h2 className="text-(--text-muted) font-semibold tracking-widest text-center text-xs uppercase pl-2">Final Combat Stats</h2>
 
-              {/* ปุ่ม Toggle Compare Mode */}
-              <button
-                onClick={handleToggleSnapshot}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${snapshotStats
+              {/* Wrapper สำหรับผูกปุ่มและ Tooltip เข้าด้วยกัน */}
+              <div className="relative group">
+
+                {/* ปุ่ม Toggle Compare Mode */}
+                <button
+                  onClick={handleToggleSnapshot}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${snapshotStats
                     ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20'
                     : 'bg-black/5 dark:bg-white/5 text-(--text-muted) border border-(--border-color) hover:bg-black/10 dark:hover:bg-white/10 hover:text-(--text-main)'
-                  }`}
-              >
-                {snapshotStats ? (
-                  <>
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                    Compare ON
-                  </>
-                ) : (
-                  <>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v4a1 1 0 001 1h3m14-5v4a1 1 0 01-1 1h-3m-4-7a9 9 0 015.656 2.343M4.343 16.657A9 9 0 0112 21" /></svg>
-                    Snap Stats
-                  </>
-                )}
-              </button>
+                    }`}
+                >
+                  {snapshotStats ? (
+                    <>
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                      Compare ON
+                    </>
+                  ) : (
+                    <>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v4a1 1 0 001 1h3m14-5v4a1 1 0 01-1 1h-3m-4-7a9 9 0 015.656 2.343M4.343 16.657A9 9 0 0112 21" /></svg>
+                      Snap Stats
+                    </>
+                  )}
+                </button>
+
+                {/* กล่อง Glassmorphism Tooltip */}
+                <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 w-52 bg-white dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-(--border-color) shadow-2xl rounded-xl p-3 text-center translate-y-2 group-hover:translate-y-0">
+                  <span className="text-[10px] text-slate-700 dark:text-(--text-main) font-bold leading-relaxed block tracking-wide">
+                    {snapshotStats
+                      ? "Compare mode is active. Try changing gears to see the stat difference!"
+                      : "Snap current stats to compare them when you change equipment."}
+                  </span>
+                </div>
+
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-(--border-color)">
@@ -635,7 +674,12 @@ export default function App() {
         </div>
 
         {/* SECTION 3: EQUIPMENT SLOTS (Component แยก) */}
-        <EquipmentSection equipment={equipment} setEquipment={setEquipment} validationMsg={validationMsg} />
+        <EquipmentSection
+          equipment={equipment}
+          setEquipment={setEquipment}
+          validationMsg={validationMsg}
+          heroType={activeHero.type}
+        />
 
         {/* เพิ่มกล่องเปล่า (Spacer) ตรงนี้ เพื่อดันให้เว็บมีพื้นที่ด้านล่างเหลือสำหรับ Dropdown */}
         <div className="h-64 w-full shrink-0 pointer-events-none"></div>

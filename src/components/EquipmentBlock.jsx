@@ -3,9 +3,25 @@ import { SET_OPTIONS, SUBSTAT_BASES } from '../utils/constants';
 import { getSubstatValue, formatStatValue } from '../utils/helpers';
 import { GlassSelect } from './GlassSelect';
 
-export const EquipmentBlock = ({ title, data, onChange, allowedMains }) => {
+export const EquipmentBlock = ({ title, data, allowedMains, onChange, heroType, isWeapon }) => {
   const usedRolls = data.substats.reduce((sum, sub) => sum + sub.rolls, 0);
   const remainingRolls = 5 - usedRolls;
+
+  const getEquipmentImage = () => {
+    if (!data.set || data.set === 'None') return null; // ถ้าไม่ใส่ของ ไม่โชว์รูป
+    
+    // ลบช่องว่างออกเผื่อชื่อเซ็ตมีเว้นวรรค (เช่น "Legendary Set" -> "LegendarySet")
+    const formattedSetName = data.set.replace(/\s+/g, ''); 
+    
+    if (isWeapon) {
+      // ถ้าเป็นอาวุธ ให้เช็ค Type ว่าเป็น MAGIC หรือ ATTACK
+      const typeStr = heroType?.toUpperCase() === 'MAGIC' ? 'Magic' : 'Attack';
+      return `/equipment/weapon_${formattedSetName}_${typeStr}.png`;
+    } else {
+      // ถ้าเป็นชุดเกราะ ไม่ต้องสน Type
+      return `/equipment/armor_${formattedSetName}.png`;
+    }
+  };
 
   const updateMainStat = (typeStr) => {
     let newValue = data.mainStat.value;

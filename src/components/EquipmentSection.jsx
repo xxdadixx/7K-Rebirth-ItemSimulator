@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { WEAPON_MAIN_VALUES, ARMOR_MAIN_VALUES } from '../utils/constants';
 import { EquipmentBlock } from './EquipmentBlock';
 
-export const EquipmentSection = ({ equipment, setEquipment, validationMsg }) => {
+export const EquipmentSection = ({ equipment, setEquipment, validationMsg, heroType }) => {
   const [eqLayout, setEqLayout] = useState('row');
 
   const eqListConfig = useMemo(() => {
@@ -29,15 +29,32 @@ export const EquipmentSection = ({ equipment, setEquipment, validationMsg }) => 
           </div>
         </div>
 
-        <div className="flex bg-(--input-bg) p-1 rounded-xl border bordeborder-(--border-color)1">
-          <button onClick={() => setEqLayout('row')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${eqLayout === 'row' ? 'bg-(--accent) text-white shadow-sm' : 'text-(--text-muted)r:text-[var(--text-main)]'}`}>1 ROW</button>
-          <button onClick={() => setEqLayout('grid')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${eqLayout === 'grid' ? 'bg-(--accent) text-white shadow-sm' : 'text-(--text-muted) hover:text-(--text-main)'}`}>2x2 GRID</button>
+        {/* ส่วนปุ่มสลับโหมด Row / Grid */}
+        <div className="flex bg-(--input-bg) p-1 rounded-xl border border-(--border-color)">
+          <button 
+            onClick={() => setEqLayout('row')} 
+            className={`px-3 py-1.5 rounded-lg transition-all flex items-center justify-center ${eqLayout === 'row' ? 'bg-(--accent) text-white shadow-sm' : 'text-(--text-muted) hover:text-(--text-main)'}`}
+            title="1 Row View"
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          
+          <button 
+            onClick={() => setEqLayout('grid')} 
+            className={`px-3 py-1.5 rounded-lg transition-all flex items-center justify-center ${eqLayout === 'grid' ? 'bg-(--accent) text-white shadow-sm' : 'text-(--text-muted) hover:text-(--text-main)'}`}
+            title="2x2 Grid View"
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></svg>
+          </button>
         </div>
       </div>
 
       <div className={`grid grid-cols-1 md:grid-cols-2 ${eqLayout === 'row' ? 'xl:grid-cols-4' : 'xl:grid-cols-2 max-w-4xl mx-auto'} gap-6 pt-2`}>
         {eqListConfig.map((eq, idx) => {
           const auroraClasses = ['aurora-style-4', 'aurora-style-1', 'aurora-style-2', 'aurora-style-3'];
+          // เช็คว่าเป็น Weapon หรือไม่ (index 0 และ 1 คือ Weapon)
+          const isWeaponItem = eq.key.includes('weapon'); 
+
           return (
             <div key={eq.key} className="relative flex flex-col hover:-translate-y-1 transition-transform duration-300">
               <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden">
@@ -45,7 +62,15 @@ export const EquipmentSection = ({ equipment, setEquipment, validationMsg }) => 
                 <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) rounded-3xl transition-colors duration-400"></div>
               </div>
               <div className="relative z-10 flex flex-col h-full">
-                <EquipmentBlock title={eq.title} data={equipment[eq.key]} allowedMains={eq.allowed} onChange={v => setEquipment({ ...equipment, [eq.key]: v })} />
+                {/* 🌟 เพิ่ม heroType และ isWeapon ลงไปตรงนี้ 🌟 */}
+                <EquipmentBlock 
+                  title={eq.title} 
+                  data={equipment[eq.key]} 
+                  allowedMains={eq.allowed} 
+                  onChange={v => setEquipment({ ...equipment, [eq.key]: v })} 
+                  heroType={heroType}
+                  isWeapon={isWeaponItem}
+                />
               </div>
             </div>
           );
