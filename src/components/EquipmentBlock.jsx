@@ -3,7 +3,6 @@ import { SET_OPTIONS, SUBSTAT_BASES } from '../utils/constants';
 import { getSubstatValue, formatStatValue } from '../utils/helpers';
 import { GlassSelect } from './GlassSelect';
 
-// 🌟 OPTIMIZATION: Wrapped EquipmentBlock in React.memo
 export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange, heroType, isWeapon }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
@@ -78,13 +77,13 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
 
         <div className="p-5 flex flex-col gap-6">
 
-          <div className="flex items-center gap-4 bg-black/5 dark:bg-black/20 p-2 rounded-2xl border border-(--border-color) shadow-inner">
+          {/* 🌟 แก้ไข: เปลี่ยนกรอบพื้นหลังให้ใช้สี --input-bg เพื่อความสว่างใสใน Light Mode 🌟 */}
+          <div className="flex items-center gap-4 bg-(--input-bg) p-2 rounded-2xl border border-(--border-color) shadow-inner transition-colors">
             <div className="w-16 h-16 shrink-0 bg-(--card-bg) border border-(--border-color) rounded-xl flex items-center justify-center overflow-hidden shadow-sm relative group">
               {data.set !== 'None' ? (
                 <img
                   src={getEquipmentImage(data.set)}
                   alt={data.set}
-                  // 🌟 OPTIMIZATION: Lazy loading
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-contain p-1 transition-transform duration-300 group-hover:scale-110 drop-shadow-md"
@@ -105,7 +104,7 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
               <button
                 type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className={`w-full bg-(--input-bg) border rounded-xl p-3 flex justify-between items-center font-semibold text-sm outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] text-(--text-main) ${isDropdownOpen ? 'border-(--accent) ring-2 ring-(--accent)/20' : 'border-(--border-color) hover:border-(--accent)/50'}`}
+                className={`w-full bg-(--card-bg) border rounded-xl p-3 flex justify-between items-center font-semibold text-sm outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] text-(--text-main) ${isDropdownOpen ? 'border-(--accent) ring-2 ring-(--accent)/20' : 'border-(--border-color) hover:border-(--accent)/50'}`}
               >
                 <span className="truncate">{data.set}</span>
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-(--accent)' : 'text-(--text-muted)'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -113,7 +112,8 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
 
               {isDropdownOpen && (
                 <div className="absolute top-full left-0 right-0 mt-2 z-[100] glass-dropdown-menu flex flex-col overflow-hidden shadow-2xl border border-(--border-color) rounded-xl origin-top animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="flex justify-end gap-1.5 p-2 border-b border-(--border-color) bg-black/5 dark:bg-white/5">
+                  {/* 🌟 แก้ไข: สีพื้นหลังแท็บ Header 🌟 */}
+                  <div className="flex justify-end gap-1.5 p-2 border-b border-(--border-color) bg-(--card-header)">
                     <button
                       onClick={(e) => { e.preventDefault(); setViewMode('list'); }}
                       className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${viewMode === 'list' ? 'bg-(--accent) text-white shadow-md' : 'text-(--text-muted) hover:bg-black/10 dark:hover:bg-white/10'}`}
@@ -128,7 +128,8 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
                     </button>
                   </div>
 
-                  <div className="max-h-[260px] overflow-y-auto custom-scrollbar p-2 bg-(--card-bg) backdrop-blur-3xl">
+                  {/* 🌟 แก้ไข: เอาพื้นหลังซ้ำซ้อนออก ให้โปร่งแสงตามค่าตั้งต้น 🌟 */}
+                  <div className="max-h-[260px] overflow-y-auto custom-scrollbar p-2">
                     {viewMode === 'list' ? (
                       <div className="flex flex-col gap-1">
                         {SET_OPTIONS.map(s => (
@@ -152,7 +153,8 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
                               key={s}
                               type="button"
                               onClick={() => { onChange({ ...data, set: s }); setIsDropdownOpen(false); }}
-                              className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 hover:z-10 hover:shadow-lg group bg-black/10 dark:bg-black/40 ${data.set === s ? 'border-(--accent) ring-2 ring-(--accent)/50' : 'border-transparent hover:border-(--border-color)'}`}
+                              /* 🌟 แก้ไข: เปลี่ยน bg-black/10 เป็นการดึงสีของการ์ดมาใช้ 🌟 */
+                              className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 hover:z-10 hover:shadow-lg group bg-(--card-bg) shadow-sm ${data.set === s ? 'border-(--accent) ring-2 ring-(--accent)/50' : 'border-transparent hover:border-(--border-color)'}`}
                             >
                               {imgSrc ? (
                                 <img
@@ -160,7 +162,7 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
                                   alt={s}
                                   loading="lazy"
                                   decoding="async"
-                                  className="w-full h-full object-contain p-1 group-hover:scale-110 group-hover:brightness-110 transition-transform duration-300"
+                                  className="w-full h-full object-contain p-1.5 group-hover:scale-110 transition-transform duration-300"
                                   onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.src = '/favicon.svg';
@@ -168,12 +170,14 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
                                   }}
                                 />
                               ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center opacity-40 bg-black/5 dark:bg-white/5">
+                                <div className="w-full h-full flex flex-col items-center justify-center opacity-40 bg-(--input-bg)">
                                   <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                                 </div>
                               )}
-                              <div className="absolute inset-x-0 bottom-0 bg-black/70 backdrop-blur-md px-1 py-1.5 border-t border-white/10 flex items-center justify-center transition-transform duration-300 group-hover:translate-y-full">
-                                <span className={`block text-[10px] font-bold text-center truncate tracking-wider ${data.set === s ? 'text-(--accent)' : 'text-white'}`}>
+                              
+                              {/* 🌟 แก้ไข: แถบชื่ออุปกรณ์ด้านล่างใช้สี Tooltip จะได้สีขาวใสใน Light mode และดำสนิทใน Dark mode 🌟 */}
+                              <div className="absolute inset-x-0 bottom-0 bg-(--tooltip-bg) backdrop-blur-md px-1 py-1.5 border-t border-(--border-color) flex items-center justify-center transition-transform duration-300 group-hover:translate-y-full shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+                                <span className={`block text-[10px] font-bold text-center truncate tracking-wider ${data.set === s ? 'text-(--accent)' : 'text-(--text-main)'}`}>
                                   {s}
                                 </span>
                               </div>
