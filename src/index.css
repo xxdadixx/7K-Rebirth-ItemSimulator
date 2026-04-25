@@ -545,3 +545,23 @@
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* =========================================
+   Hero Swap Animation (เอฟเฟกต์โฮโลแกรมปรากฏตัว)
+========================================= */
+@keyframes heroMaterialize {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(15px);
+    filter: blur(8px) brightness(1.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0) brightness(1);
+  }
+}
+
+.animate-hero-swap {
+  animation: heroMaterialize 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

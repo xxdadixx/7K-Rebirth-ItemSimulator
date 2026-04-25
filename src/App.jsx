@@ -20,6 +20,8 @@ export default function App() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchViewMode, setSearchViewMode] = useState('grid');
+  const [snapshotStats, setSnapshotStats] = useState(null);
   const dropdownRef = useRef(null);
 
   const [presets, setPresets] = useState(() => {
@@ -75,6 +77,15 @@ export default function App() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleToggleSnapshot = () => {
+    if (snapshotStats) {
+      setSnapshotStats(null); // ปิดโหมด ล้างข้อมูลทิ้ง
+    } else {
+      // ถ่ายภาพข้อมูล finalStats ปัจจุบันเก็บไว้ (Deep Copy)
+      setSnapshotStats(JSON.parse(JSON.stringify(finalStats.breakdown)));
+    }
+  };
 
   const handleSavePreset = (nameInput) => {
     if (!activeHero) return;
@@ -168,15 +179,12 @@ export default function App() {
               <div className="p-6 flex flex-col gap-6">
 
                 {/* --- 🌟 ส่วนแสดงรูปภาพ Hero 🌟 --- */}
-                <div className="flex flex-col items-center justify-center -mt-2">
+                <div key={activeHero.name} className="flex flex-col items-center justify-center -mt-2 animate-hero-swap">
 
-                  {/* ปรับขนาดกล่องให้พอดีกับสัดส่วนภาพแนวตั้ง (ประมาณ w-28 ถึง w-32) และล็อก aspect-ratio */}
-                  <div className={`relative w-[120px] aspect-[156/194] md:w-[140px] rounded-2xl overflow-hidden border-2 shadow-lg flex items-center justify-center transition-all ${getGradeBgClass(activeHero.grade)}`}>
-
+                  <div className={`relative w-[120px] aspect-[156/194] md:w-[140px] rounded-2xl overflow-hidden border-2 shadow-lg flex items-center justify-center transition-colors duration-300 ${getGradeBgClass(activeHero.grade)}`}>
                     <img
                       src={`/heroes/${activeHero.name}.png`}
                       alt={activeHero.name}
-                      /* เปลี่ยนจาก object-cover เป็น object-contain เพื่อไม่ให้ภาพถูกตัดขอบ */
                       className="w-full h-full object-contain z-10 transition-transform duration-500 hover:scale-110 drop-shadow-md"
                       onError={(e) => {
                         e.target.onerror = null;
@@ -184,13 +192,18 @@ export default function App() {
                         e.target.className = 'w-10 h-10 opacity-20 grayscale';
                       }}
                     />
-
-                    {/* เอฟเฟกต์เงาไล่ระดับด้านล่างของรูป */}
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent z-0"></div>
                   </div>
 
                   {/* แสดงชื่อตัวละครใต้รูป */}
-                  <h3 className={`mt-3 font-bold text-lg tracking-wider uppercase drop-shadow-sm ${getGradeColorClass(activeHero.grade)}`}>
+                  <h3
+                    className={`mt-4 uppercase tracking-widest transition-colors ${getGradeColorClass(activeHero.grade)}`}
+                    style={{
+                      fontFamily: '"Press Start 2P", monospace',
+                      fontSize: '1rem',
+                      textShadow: '0 0 8px currentColor, 0 0 15px currentColor' // สร้างแสงนีออนจากสีหลัก
+                    }}
+                  >
                     {activeHero.name}
                   </h3>
                 </div>
@@ -203,26 +216,84 @@ export default function App() {
                     <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--text-muted)"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
                   </div>
                   {isDropdownOpen && (
-                    <div className="glass-dropdown-menu w-full">
-                      {/* เพิ่ม div ด้านในเพื่อทำหน้าที่ Scroll โดยเฉพาะ */}
-                      <div className="max-h-72 overflow-y-auto custom-scrollbar py-1">
-                        {filteredHeroes.length > 0 ? filteredHeroes.map(h => (
-                          <button
-                            key={h.name}
-                            className="dropdown-item-hover w-full text-left px-5 py-3 flex justify-between items-center border-b border-(--border-color) last:border-0"
-                            onClick={() => { setSelectedHeroName(h.name); setIsDropdownOpen(false); setSearchTerm(''); }}
-                          >
-                            <span className={`font-semibold ${getGradeColorClass(h.grade)}`}>{h.name}</span>
-                            <div className="flex items-center gap-2">
-                              <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getElementBgClass(h.element)} ${getElementColorClass(h.element)}`}>{h.element}</span>
-                              <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getGradeBgClass(h.grade)}`}>{h.grade}</span>
-                            </div>
-                          </button>
-                        )) : (
-                          <div className="p-6 text-center text-(--text-muted) text-sm">No hero found</div>
-                        )}
+                    <div className="glass-dropdown-menu w-full overflow-hidden flex flex-col z-50">
 
+                      {/* --- 🌟 แท็บสลับโหมด List / Grid 🌟 --- */}
+                      <div className="flex justify-end gap-1.5 p-2 border-b border-(--border-color) bg-black/5 dark:bg-white/5">
+                        <button
+                          onClick={(e) => { e.preventDefault(); setSearchViewMode('list'); }}
+                          className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${searchViewMode === 'list' ? 'bg-(--accent) text-white shadow-md' : 'text-(--text-muted) hover:bg-black/10 dark:hover:bg-white/10'}`}
+                          title="List View"
+                        >
+                          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        </button>
+                        <button
+                          onClick={(e) => { e.preventDefault(); setSearchViewMode('grid'); }}
+                          className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${searchViewMode === 'grid' ? 'bg-(--accent) text-white shadow-md' : 'text-(--text-muted) hover:bg-black/10 dark:hover:bg-white/10'}`}
+                          title="Grid View"
+                        >
+                          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></svg>
+                        </button>
                       </div>
+
+                      {/* พื้นที่แสดงผลลัพธ์การค้นหา */}
+                      <div className="max-h-[320px] overflow-y-auto custom-scrollbar p-2">
+                        {filteredHeroes.length > 0 ? (
+                          searchViewMode === 'list' ? (
+                            /* ---------------- โหมด 1: List View ---------------- */
+                            <div className="flex flex-col gap-1">
+                              {filteredHeroes.map(h => (
+                                <button
+                                  key={h.name}
+                                  className="dropdown-item-hover w-full text-left px-4 py-3 flex justify-between items-center border border-transparent hover:border-(--border-color) rounded-xl"
+                                  onClick={() => { setSelectedHeroName(h.name); setIsDropdownOpen(false); setSearchTerm(''); }}
+                                >
+                                  <span className={`font-semibold ${getGradeColorClass(h.grade)}`}>{h.name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getElementBgClass(h.element)} ${getElementColorClass(h.element)}`}>{h.element}</span>
+                                    <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getGradeBgClass(h.grade)}`}>{h.grade}</span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            /* ---------------- โหมด 2: Grid View (เลือกจากรูป) ---------------- */
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                              {filteredHeroes.map(h => (
+                                <button
+                                  key={h.name}
+                                  onClick={() => { setSelectedHeroName(h.name); setIsDropdownOpen(false); setSearchTerm(''); }}
+                                  className={`relative aspect-[156/194] rounded-xl overflow-hidden border-2 transition-all duration-300 hover:scale-105 hover:z-10 shadow-sm group ${getGradeBgClass(h.grade)}`}
+                                  title={h.name}
+                                >
+                                  {/* รูปภาพตัวละคร */}
+                                  <img
+                                    src={`/heroes/${h.name}.png`}
+                                    alt={h.name}
+                                    className="w-full h-full object-contain bg-black/10 dark:bg-black/40 group-hover:brightness-110 transition-all"
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = '/favicon.svg';
+                                      e.target.className = 'w-8 h-8 m-auto opacity-20 grayscale mt-6';
+                                    }}
+                                  />
+                                  {/* ป้ายชื่อด้านล่างรูป */}
+                                  <div className="absolute inset-x-0 bottom-0 bg-black/70 backdrop-blur-md px-1 py-1.5 border-t border-white/10">
+                                    <span className={`block text-[9px] font-bold text-center truncate tracking-wider ${getGradeColorClass(h.grade)}`}>
+                                      {h.name}
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )
+                        ) : (
+                          <div className="p-8 text-center text-(--text-muted) text-sm font-bold uppercase tracking-widest">
+                            No hero found
+                          </div>
+                        )}
+                      </div>
+
                     </div>
                   )}
                 </div>
@@ -407,57 +478,74 @@ export default function App() {
                     </div>
                   );
                 })}
+
+                {/* 🌟 เพิ่มส่วน Total Raw Stats สรุปยอดรวมตรงนี้ 🌟 */}
+                <div className="mt-2 pt-5 border-t border-(--border-color) flex flex-col gap-3">
+                  <div className="flex justify-between items-end px-1">
+                    <span className="text-[11px] text-(--text-muted) font-bold tracking-widest uppercase flex items-center gap-1.5">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                      Total Raw Stats
+                    </span>
+                    <span className="text-[9px] text-(--text-muted) opacity-70 font-semibold uppercase tracking-wider">( Base + Trans + Poten )</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {/* กล่องรวม ATK */}
+                    <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
+                      <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/15 transition-colors"></div>
+                      <span className="text-xs md:text-sm font-bold text-red-500 mb-3 uppercase tracking-widest">Attack</span>
+                      <span
+                        key={((activeHero.baseAtk || 0) + (finalStats.tAtk || 0) + (finalStats.pAtk || 0))}
+                        className={`animate-value-change transition-colors tracking-widest ${isDarkMode ? 'text-red-400 ![text-shadow:0_0_8px_currentColor]' : '!text-red-700 ![text-shadow:none]'}`}
+                        style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '1.1rem' }}
+                      >
+                        {((activeHero.baseAtk || 0) + (finalStats.tAtk || 0) + (finalStats.pAtk || 0)).toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* กล่องรวม DEF */}
+                    <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
+                      <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/15 transition-colors"></div>
+                      <span className="text-xs md:text-sm font-bold text-blue-500 mb-3 uppercase tracking-widest">Defense</span>
+                      <span
+                        key={((activeHero.baseDef || 0) + (finalStats.tDef || 0) + (finalStats.pDef || 0))}
+                        className={`animate-value-change transition-colors tracking-widest ${isDarkMode ? 'text-blue-400 ![text-shadow:0_0_8px_currentColor]' : '!text-blue-700 ![text-shadow:none]'}`}
+                        style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '1.1rem' }}
+                      >
+                        {((activeHero.baseDef || 0) + (finalStats.tDef || 0) + (finalStats.pDef || 0)).toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* กล่องรวม HP */}
+                    <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
+                      <div className="absolute inset-0 bg-green-500/5 group-hover:bg-green-500/15 transition-colors"></div>
+                      <span className="text-xs md:text-sm font-bold text-green-500 mb-3 uppercase tracking-widest">HP</span>
+                      <span
+                        key={((activeHero.baseHp || 0) + (finalStats.tHp || 0) + (finalStats.pHp || 0))}
+                        className={`animate-value-change transition-colors tracking-widest ${isDarkMode ? 'text-green-400 ![text-shadow:0_0_8px_currentColor]' : '!text-green-700 ![text-shadow:none]'}`}
+                        style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '1.1rem' }}
+                      >
+                        {((activeHero.baseHp || 0) + (finalStats.tHp || 0) + (finalStats.pHp || 0)).toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* กล่องรวม SPD */}
+                    <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
+                      <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/15 transition-colors"></div>
+                      <span className="text-xs md:text-sm font-bold text-yellow-500 mb-3 uppercase tracking-widest">Speed</span>
+                      <span
+                        key={(activeHero.baseSpd || 0)}
+                        className={`animate-value-change transition-colors tracking-widest ${isDarkMode ? 'text-[#ffd700] ![text-shadow:0_0_8px_currentColor]' : '!text-amber-700 ![text-shadow:none]'}`}
+                        style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '1.1rem' }}
+                      >
+                        {(activeHero.baseSpd || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {/* ---------------------------------------------------- */}
+
               </div>
             </div>
-            {/* 🌟 เพิ่มส่วน Total Raw Stats สรุปยอดรวมตรงนี้ 🌟 */}
-            <div className="mt-2 pt-5 border-t border-(--border-color) flex flex-col gap-3">
-              <div className="flex justify-between items-end px-1">
-                <span className="text-[11px] text-(--text-muted) font-bold tracking-widest uppercase flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  Total Raw Stats
-                </span>
-                <span className="text-[9px] text-(--text-muted) opacity-70 font-semibold uppercase tracking-wider">( Base + Trans + Poten )</span>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {/* กล่องรวม ATK */}
-                <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
-                  <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/15 transition-colors"></div>
-                  <span className="text-[10px] font-bold text-red-500 mb-1 uppercase tracking-wider">Attack</span>
-                  <span className="font-bold text-lg text-(--text-main) drop-shadow-sm">
-                    {((activeHero.baseAtk || 0) + (finalStats.tAtk || 0) + (finalStats.pAtk || 0)).toLocaleString()}
-                  </span>
-                </div>
-
-                {/* กล่องรวม DEF */}
-                <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
-                  <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/15 transition-colors"></div>
-                  <span className="text-[10px] font-bold text-blue-500 mb-1 uppercase tracking-wider">Defense</span>
-                  <span className="font-bold text-lg text-(--text-main) drop-shadow-sm">
-                    {((activeHero.baseDef || 0) + (finalStats.tDef || 0) + (finalStats.pDef || 0)).toLocaleString()}
-                  </span>
-                </div>
-
-                {/* กล่องรวม HP */}
-                <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
-                  <div className="absolute inset-0 bg-green-500/5 group-hover:bg-green-500/15 transition-colors"></div>
-                  <span className="text-[10px] font-bold text-green-500 mb-1 uppercase tracking-wider">HP</span>
-                  <span className="font-bold text-lg text-(--text-main) drop-shadow-sm">
-                    {((activeHero.baseHp || 0) + (finalStats.tHp || 0) + (finalStats.pHp || 0)).toLocaleString()}
-                  </span>
-                </div>
-
-                {/* กล่องรวม SPD */}
-                <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
-                  <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/15 transition-colors"></div>
-                  <span className="text-[10px] font-bold text-yellow-500 mb-1 uppercase tracking-wider">Speed</span>
-                  <span className="font-bold text-lg text-(--text-main) drop-shadow-sm">
-                    {(activeHero.baseSpd || 0).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-            {/* ---------------------------------------------------- */}
           </div>
         </div>
 
@@ -468,35 +556,61 @@ export default function App() {
             <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
           </div>
           <div className="relative z-10 flex flex-col h-full">
-            <div className="bg-(--card-header) p-4 border-b border-(--border-color) rounded-t-3xl"><h2 className="text-(--text-muted) font-semibold tracking-widest text-center text-xs uppercase">Final Combat Stats</h2></div>
+
+            {/* 🌟 หัวตารางเพิ่มปุ่ม Snap Stats 🌟 */}
+            <div className="bg-(--card-header) p-3 sm:p-4 border-b border-(--border-color) rounded-t-3xl flex justify-between items-center">
+              <h2 className="text-(--text-muted) font-semibold tracking-widest text-center text-xs uppercase pl-2">Final Combat Stats</h2>
+
+              {/* ปุ่ม Toggle Compare Mode */}
+              <button
+                onClick={handleToggleSnapshot}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${snapshotStats
+                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20'
+                    : 'bg-black/5 dark:bg-white/5 text-(--text-muted) border border-(--border-color) hover:bg-black/10 dark:hover:bg-white/10 hover:text-(--text-main)'
+                  }`}
+              >
+                {snapshotStats ? (
+                  <>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    Compare ON
+                  </>
+                ) : (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v4a1 1 0 001 1h3m14-5v4a1 1 0 01-1 1h-3m-4-7a9 9 0 015.656 2.343M4.343 16.657A9 9 0 0112 21" /></svg>
+                    Snap Stats
+                  </>
+                )}
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-(--border-color)">
               {/* คอลัมน์ที่ 1 */}
-              <div className="p-6 space-y-2">
+              <div className="p-4 sm:p-6 space-y-2">
                 {[
                   { label: 'Attack', color: 'text-red-500', key: 'atk', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4" /></svg> },
                   { label: 'Defense', color: 'text-blue-500', key: 'def', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg> },
                   { label: 'HP', color: 'text-green-500', key: 'hp', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg> },
                   { label: 'Speed', color: 'text-yellow-500', key: 'spd', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> }
-                ].map(item => (<AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={false} textSize="text-[15px]" />))}
+                ].map(item => (<AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={false} textSize="text-[15px]" snapStat={snapshotStats ? snapshotStats[item.key] : null} />))}
               </div>
 
               {/* คอลัมน์ที่ 2 */}
-              <div className="p-6 space-y-2">
+              <div className="p-4 sm:p-6 space-y-2">
                 {[
                   { label: 'Crit Rate', color: 'text-red-500', key: 'critRate', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 22a10 10 0 100-20 10 10 0 000 20zM12 8v8M8 12h8" /></svg> },
                   { label: 'Crit Damage', color: 'text-red-500', key: 'critDmg', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg> },
                   { label: 'Weakness Hit', color: 'text-purple-500', key: 'weakness', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> }
-                ].map(item => (<AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />))}
+                ].map(item => (<AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" snapStat={snapshotStats ? snapshotStats[item.key] : null} />))}
               </div>
 
               {/* คอลัมน์ที่ 3 */}
-              <div className="p-6 space-y-2">
+              <div className="p-4 sm:p-6 space-y-2">
                 {[
                   { label: 'Block Rate', color: 'text-blue-400', key: 'block', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4" /></svg> },
                   { label: 'Dmg Reduction', color: 'text-blue-400', key: 'dmgReduc', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v8M9 13l3 3 3-3" /></svg> },
                   { label: 'Effect Hit', color: 'text-cyan-500', key: 'effHit', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 3l2.286 6.857L22 12l-6.714 2.143L13 21l-2.286-6.857L4 12l6.714-2.143L13 3z" /></svg> },
                   { label: 'Effect Res', color: 'text-cyan-500', key: 'effRes', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg> }
-                ].map(item => (<AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" />))}
+                ].map(item => (<AnimatedStatRow key={item.key} item={item} stat={finalStats.breakdown[item.key]} isPercent={true} textSize="text-sm" snapStat={snapshotStats ? snapshotStats[item.key] : null} />))}
               </div>
               <div className="p-6 flex flex-col h-full">
                 <div className="flex-1 bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col shadow-inner relative overflow-hidden">
