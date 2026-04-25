@@ -409,6 +409,55 @@ export default function App() {
                 })}
               </div>
             </div>
+            {/* 🌟 เพิ่มส่วน Total Raw Stats สรุปยอดรวมตรงนี้ 🌟 */}
+            <div className="mt-2 pt-5 border-t border-(--border-color) flex flex-col gap-3">
+              <div className="flex justify-between items-end px-1">
+                <span className="text-[11px] text-(--text-muted) font-bold tracking-widest uppercase flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  Total Raw Stats
+                </span>
+                <span className="text-[9px] text-(--text-muted) opacity-70 font-semibold uppercase tracking-wider">( Base + Trans + Poten )</span>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {/* กล่องรวม ATK */}
+                <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
+                  <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/15 transition-colors"></div>
+                  <span className="text-[10px] font-bold text-red-500 mb-1 uppercase tracking-wider">Attack</span>
+                  <span className="font-bold text-lg text-(--text-main) drop-shadow-sm">
+                    {((activeHero.baseAtk || 0) + (finalStats.tAtk || 0) + (finalStats.pAtk || 0)).toLocaleString()}
+                  </span>
+                </div>
+
+                {/* กล่องรวม DEF */}
+                <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
+                  <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/15 transition-colors"></div>
+                  <span className="text-[10px] font-bold text-blue-500 mb-1 uppercase tracking-wider">Defense</span>
+                  <span className="font-bold text-lg text-(--text-main) drop-shadow-sm">
+                    {((activeHero.baseDef || 0) + (finalStats.tDef || 0) + (finalStats.pDef || 0)).toLocaleString()}
+                  </span>
+                </div>
+
+                {/* กล่องรวม HP */}
+                <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
+                  <div className="absolute inset-0 bg-green-500/5 group-hover:bg-green-500/15 transition-colors"></div>
+                  <span className="text-[10px] font-bold text-green-500 mb-1 uppercase tracking-wider">HP</span>
+                  <span className="font-bold text-lg text-(--text-main) drop-shadow-sm">
+                    {((activeHero.baseHp || 0) + (finalStats.tHp || 0) + (finalStats.pHp || 0)).toLocaleString()}
+                  </span>
+                </div>
+
+                {/* กล่องรวม SPD */}
+                <div className="bg-(--input-bg) border border-(--border-color) rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group transition-all hover:-translate-y-0.5">
+                  <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/15 transition-colors"></div>
+                  <span className="text-[10px] font-bold text-yellow-500 mb-1 uppercase tracking-wider">Speed</span>
+                  <span className="font-bold text-lg text-(--text-main) drop-shadow-sm">
+                    {(activeHero.baseSpd || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {/* ---------------------------------------------------- */}
           </div>
         </div>
 

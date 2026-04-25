@@ -449,18 +449,18 @@
 .arcade-grid-bg {
   position: fixed;
   inset: 0;
-  /* ขยายขนาดช่องให้กว้างขึ้น ลดความหนาแน่น */
   background-size: 60px 60px; 
-  /* ปรับให้ขยับช้าลงเล็กน้อย ไม่ให้ตาลาย */
   animation: scrollGrid 4s linear infinite; 
   z-index: -1;
   
   /* --- Light Mode --- */
-  background-color: #f8fafc; /* พื้นสว่างแบบสะอาดตา */
-  /* ลดความเข้มของเส้นตารางเหลือแค่ 2% (0.02) ให้ดูเป็นลายน้ำจางๆ */
+  background-color: #f8fafc; 
+  
+  /* แก้ไขตรงนี้: เพิ่มความเข้มของเส้นสีดำจาก 0.02 (2%) ขึ้นมาเป็น 0.07 (7%) หรือ 0.08 (8%) */
   background-image: 
-    linear-gradient(rgba(15, 23, 42, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(15, 23, 42, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.07) 1px, transparent 1px);
+    
   transition: background-color 0.4s ease, background-image 0.4s ease;
 }
 
@@ -481,15 +481,22 @@
 .crt-overlay {
   position: fixed;
   inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
-  background-size: 100% 4px;
   
-  /* เปลี่ยนจาก 9999 เป็น 0 เพื่อดันเส้นสแกนให้ไปอยู่ข้างหลัง UI และรูปภาพ */
+  /* 1. เปลี่ยนมาใช้ repeating-linear-gradient และเพิ่มความเข้มเป็น 50% เพื่อให้ตัดกับพื้นสีดำได้ชัดเจน */
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.5) 2px,
+    rgba(0, 0, 0, 0.5) 4px
+  );
+  
+  /* 2. ดันเลเยอร์ไปที่ 0 ให้อยู่ข้างหลัง UI กระจกทั้งหมด เพื่อไม่ให้เส้นไปรบกวนรูปภาพตัวละคร */
   z-index: 0; 
   
   pointer-events: none;
   
-  /* ... โค้ดส่วนอื่นๆ คงไว้เหมือนเดิม ... */
+  /* ปิดการแสดงผลใน Light Mode เหมือนเดิม */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.4s ease, visibility 0.4s ease;
