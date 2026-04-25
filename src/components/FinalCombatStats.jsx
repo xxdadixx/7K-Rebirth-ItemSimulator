@@ -72,33 +72,41 @@ export const FinalCombatStats = React.memo(({
               <label className="text-[10px] text-(--text-muted) font-bold uppercase tracking-widest mb-4 block text-center">Active Set Bonus</label>
               
               {finalStats.activeSetDetails && finalStats.activeSetDetails.length > 0 ? (
-                // 🌟 FIX 1: ปิด overflow-y-auto เพื่อไม่ให้ติดแท่ง Scrollbar ในรูปภาพแคปเจอร์ 🌟
                 <div className="w-full space-y-3 flex-1 pb-2">
                   {finalStats.activeSetDetails.map((set, idx) => (
-                    // 🌟 FIX 2: ลบ backdrop-blur และ absolute div ออก เปลี่ยนมาใช้ border-l แทน 🌟
+                    
+                    /* 🌟 FIX: ปรับการ์ดให้ใช้ <table> แท้ 100% ล็อคโครงสร้างไม่ให้พังแน่นอน 🌟 */
                     <div 
                       key={idx} 
-                      className="bg-(--card-bg) border border-(--border-color) shadow-sm rounded-xl p-3.5 flex flex-col gap-1.5 text-left transition-all border-l-[5px]"
-                      style={{ borderLeftColor: 'var(--color-set, #10b981)' }}
+                      className="bg-(--card-bg) border border-(--border-color) border-l-[4px] border-l-(--accent) shadow-sm rounded-xl p-3 flex flex-col text-left transition-all"
                     >
-                      <div className="flex justify-between items-center pl-1">
-                        <span className="font-bold text-sm text-(--text-main) uppercase tracking-tight">{set.name}</span>
-                        <span 
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-black/5 dark:bg-white/5 border-(--border-color)" 
-                          style={{ color: 'var(--color-set, #10b981)' }}
-                        >
-                          {set.count}-Set
-                        </span>
-                      </div>
-                      <div className="pl-1 flex flex-col mt-1 space-y-1">
+                      <table className="w-full border-collapse m-0">
+                        <tbody>
+                          <tr>
+                            <td className="align-middle w-full pr-2">
+                              <div className="font-bold text-sm text-(--text-main) uppercase tracking-tight leading-tight block">
+                                {set.name}
+                              </div>
+                            </td>
+                            <td className="align-middle whitespace-nowrap">
+                              <div className="inline-block text-[10px] font-bold px-2 py-0.5 rounded border bg-(--input-bg) border-(--border-color) text-(--text-main)">
+                                {set.count}-Set
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      
+                      <div className="flex flex-col space-y-1.5 mt-2">
                         {set.effects.map((eff, i) => (
-                          <span key={i} className="text-[11px] font-bold text-(--accent) leading-tight flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-(--accent)"></div>
-                            {eff}
-                          </span>
+                          <div key={i} className="text-[11px] font-bold text-(--accent) leading-tight flex items-start gap-1.5">
+                            <div className="shrink-0 w-1.5 h-1.5 rounded-full bg-(--accent) mt-1"></div>
+                            <span>{eff}</span>
+                          </div>
                         ))}
                       </div>
                     </div>
+
                   ))}
                 </div>
               ) : (

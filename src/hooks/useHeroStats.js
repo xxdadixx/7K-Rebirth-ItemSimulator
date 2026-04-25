@@ -15,7 +15,6 @@ const SET_BONUS_DATA = {
 
 export const useHeroStats = (activeHero, equipment, potentials, transcend, ring) => {
   return useMemo(() => {
-    // 🌟 1. ดักจับสถานะ Unselected หรือ Null แล้ว Return ค่า 0 ทันที 🌟
     if (!activeHero || activeHero.name === 'Unselected') {
       return {
         tAtk: 0, tDef: 0, tHp: 0, pAtk: 0, pDef: 0, pHp: 0,
@@ -36,7 +35,6 @@ export const useHeroStats = (activeHero, equipment, potentials, transcend, ring)
       };
     }
 
-    // 🌟 2. ถ้ามีตัวละคร ก็คำนวณตามปกติ 🌟
     let totals = {
       'Attack %': 0, 'Attack Flat': 0, 'Defense %': 0, 'Defense Flat': 0,
       'HP %': 0, 'HP Flat': 0, 'Speed': 0,
@@ -104,8 +102,12 @@ export const useHeroStats = (activeHero, equipment, potentials, transcend, ring)
     const hpSetVal = Math.floor(activeHero.baseHp * paladinHpPct / 100);
     const hpRingVal = Math.floor(activeHero.baseHp * ring / 100);
 
-    const cChar = 'text-(--color-char)'; const cEq = 'text-(--color-equip)';
-    const cSet = 'text-(--color-set)'; const cRing = 'text-(--color-ring)';
+    // 🌟 แก้ไข: เปลี่ยนตัวแปรสีให้ตรงกับไอคอน (+) ใน AnimatedStatRow 🌟
+    // สีทอง (Amber) สำหรับค่าตัวละคร และ สีเขียว (Emerald) สำหรับค่าอุปกรณ์/เซ็ต
+    const cChar = 'text-amber-500 drop-shadow-[0_0_2px_rgba(245,158,11,0.2)]'; 
+    const cEq = 'text-emerald-500 drop-shadow-[0_0_2px_rgba(16,185,129,0.2)]';
+    const cSet = 'text-emerald-500 drop-shadow-[0_0_2px_rgba(16,185,129,0.2)]'; 
+    const cRing = 'text-emerald-500 drop-shadow-[0_0_2px_rgba(16,185,129,0.2)]';
 
     const breakdown = {
       atk: {
