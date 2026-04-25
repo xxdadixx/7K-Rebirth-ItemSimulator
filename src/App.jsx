@@ -128,41 +128,49 @@ export default function App() {
       <div className="crt-overlay"></div>
 
       <div className="max-w-[1400px] mx-auto space-y-8 relative">
-        <TopBar presets={presets} onSavePreset={handleSavePreset} onLoadPreset={handleLoadPreset} onDeletePreset={handleDeletePreset} isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
+        <TopBar
+          presets={presets}
+          onSavePreset={handleSavePreset}
+          onLoadPreset={handleLoadPreset}
+          onDeletePreset={handleDeletePreset}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+          activeHeroName={activeHero?.name !== 'Unselected' ? activeHero?.name : 'Setup'} // ส่งชื่อฮีโร่ไปตั้งชื่อไฟล์
+        />
+        <div id="build-capture-area" className="p-2 sm:p-4 rounded-3xl space-y-8">
+          <div className="flex flex-col xl:flex-row gap-8">
+            <HeroSetupProfile
+              activeHero={activeHero}
+              heroDataList={heroDataList}
+              setSelectedHeroName={setSelectedHeroName}
+              transcend={transcend}
+              setTranscend={setTranscend}
+              ring={ring}
+              setRing={setRing}
+              onReset={handleReset}
+            />
+            <BaseStatsPanel
+              activeHero={activeHero}
+              finalStats={finalStats}
+              potentials={potentials}
+              handlePotentialChange={handlePotentialChange}
+              isDarkMode={isDarkMode}
+            />
+          </div>
 
-        <div className="flex flex-col xl:flex-row gap-8">
-          <HeroSetupProfile
-            activeHero={activeHero}
-            heroDataList={heroDataList}
-            setSelectedHeroName={setSelectedHeroName}
-            transcend={transcend}
-            setTranscend={setTranscend}
-            ring={ring}
-            setRing={setRing}
-            onReset={handleReset}
-          />
-          <BaseStatsPanel
-            activeHero={activeHero}
+          <FinalCombatStats
             finalStats={finalStats}
-            potentials={potentials}
-            handlePotentialChange={handlePotentialChange}
-            isDarkMode={isDarkMode}
+            snapshotStats={snapshotStats}
+            handleToggleSnapshot={handleToggleSnapshot}
+          />
+
+          <EquipmentSection
+            equipment={equipment}
+            setEquipment={setEquipment}
+            validationMsg={validationMsg}
+            heroType={activeHero.type}
           />
         </div>
-
-        <FinalCombatStats
-          finalStats={finalStats}
-          snapshotStats={snapshotStats}
-          handleToggleSnapshot={handleToggleSnapshot}
-        />
-
-        <EquipmentSection
-          equipment={equipment}
-          setEquipment={setEquipment}
-          validationMsg={validationMsg}
-          heroType={activeHero.type}
-        />
-
         <div className="h-64 w-full shrink-0 pointer-events-none"></div>
       </div>
     </div>

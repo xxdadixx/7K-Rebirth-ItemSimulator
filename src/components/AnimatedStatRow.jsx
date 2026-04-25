@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+// 🌟 จุดสำคัญ: ต้องมีคำว่า export const อยู่ตรงนี้ 🌟
 export const AnimatedStatRow = React.memo(({ item, stat, isPercent, textSize = "text-base", snapStat = null }) => {
   const base = stat?.base || 0;
   const totalChar = stat?.totalChar || 0;
@@ -41,7 +42,6 @@ export const AnimatedStatRow = React.memo(({ item, stat, isPercent, textSize = "
         <div className={`w-9 h-9 rounded-lg bg-(--card-bg) border border-(--border-color) shadow-sm flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform duration-300`}>
           {item.icon}
         </div>
-        {/* 🌟 คืนค่าป้ายชื่อสถิติ (Stat Label) พร้อมสีตามธีม กลับมาตรงนี้ 🌟 */}
         <span className={`font-bold uppercase tracking-wider text-xs sm:text-sm transition-colors ${item.color}`}>
           {item.label}
         </span>
@@ -62,7 +62,6 @@ export const AnimatedStatRow = React.memo(({ item, stat, isPercent, textSize = "
         )}
       </div>
       
-      {/* ส่วน Details (Hover) ยังคงอยู่และทำงานได้ปกติ */}
       {stat?.details && stat.details.length > 0 && (
         <div className="absolute right-0 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 w-64 bg-(--card-bg) backdrop-blur-2xl border border-(--border-color) shadow-2xl rounded-2xl p-4 translate-y-2 group-hover:translate-y-0 pointer-events-none">
            <div className="text-[10px] text-(--text-muted) uppercase font-bold tracking-widest mb-3 pb-2 border-b border-(--border-color)">

@@ -20,6 +20,37 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
   const usedRolls = data.substats.reduce((sum, sub) => sum + sub.rolls, 0);
   const remainingRolls = 5 - usedRolls;
 
+  const handleAutoOptimize = useCallback((targetType) => {
+    let currentRemaining = remainingRolls;
+    if (currentRemaining <= 0) return;
+
+    const newSubs = [...data.substats].map(sub => ({ ...sub })); // Deep copy
+
+    // ลองหาว่ามี Substat นี้อยู่แล้วไหม
+    let targetIdx = newSubs.findIndex(s => s.type === targetType);
+
+    if (targetIdx !== -1) {
+      // ถ้ามีอยู่แล้ว ให้เทแต้มใส่จนกว่าจะเต็ม 5 หรือแต้มหมด
+      const spaceLeft = 5 - newSubs[targetIdx].rolls;
+      const toAdd = Math.min(currentRemaining, spaceLeft);
+      newSubs[targetIdx].rolls += toAdd;
+      currentRemaining -= toAdd;
+    } else {
+      // ถ้ายังไม่มี ให้หาช่องที่ว่างอยู่ (Rolls = 0) แล้วเปลี่ยนเป็นประเภทนี้
+      const emptyIdx = newSubs.findIndex(s => s.rolls === 0);
+      if (emptyIdx !== -1) {
+        newSubs[emptyIdx].type = targetType;
+        newSubs[emptyIdx].rolls = Math.min(currentRemaining, 5);
+        currentRemaining -= newSubs[emptyIdx].rolls;
+      }
+    }
+
+    // ถ้ามีการเปลี่ยนแปลง ให้ส่งค่ากลับไปอัปเดต State
+    if (currentRemaining < remainingRolls) {
+      onChange({ ...data, substats: newSubs });
+    }
+  }, [data, remainingRolls, onChange]);
+
   const getEquipmentImage = useCallback((setName) => {
     if (!setName || setName === 'None') return null;
     if (isWeapon) {
@@ -56,10 +87,9 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
   const mainStatKeys = allowedMains ? Object.keys(allowedMains) : Object.keys(SUBSTAT_BASES);
 
   return (
-    <div className={`relative flex flex-col h-full min-h-[500px] transition-all duration-300 ${isDropdownOpen ? 'z-[100]' : 'z-10 hover:z-[50] focus-within:z-[50]'}`}>
-      <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) pointer-events-none">
-        <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
-      </div>
+    <div className={`relative flex flex-col h-full min-h-[500px] transition-all duration-300 ${isDropdownOpen ? 'z-[100]' : 'z-10 hover:z-[50] focus-within:z-[50]'}`}>      <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) pointer-events-none">
+      <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
+    </div>
 
       <div className="relative z-20 flex flex-col h-full">
         {/* Header */}
@@ -174,7 +204,7 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
                                   <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                                 </div>
                               )}
-                              
+
                               {/* 🌟 แก้ไข: แถบชื่ออุปกรณ์ด้านล่างใช้สี Tooltip จะได้สีขาวใสใน Light mode และดำสนิทใน Dark mode 🌟 */}
                               <div className="absolute inset-x-0 bottom-0 bg-(--tooltip-bg) backdrop-blur-md px-1 py-1.5 border-t border-(--border-color) flex items-center justify-center transition-transform duration-300 group-hover:translate-y-full shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
                                 <span className={`block text-[10px] font-bold text-center truncate tracking-wider ${data.set === s ? 'text-(--accent)' : 'text-(--text-main)'}`}>
@@ -213,10 +243,12 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
           </div>
 
           <div className="pt-2">
-            <div className="flex text-[10px] text-(--text-muted) font-bold uppercase tracking-wider px-2 pb-2">
-              <div className="w-[45%]">Substats</div>
-              <div className="w-[20%] text-center">Rolls</div>
-              <div className="w-[35%] text-right">Power</div>
+            <div className="flex justify-between items-center px-2 pb-2">
+              <div className="flex text-[10px] text-(--text-muted) font-bold uppercase tracking-wider gap-4 w-full">
+                <div className="w-[45%]">Substats</div>
+                <div className="w-[20%] text-center">Rolls</div>
+                <div className="w-[35%] text-right">Power</div>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -272,6 +304,37 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
                 );
               })}
             </div>
+
+            <div className="mt-4 pt-3 border-t border-(--border-color) flex items-center justify-between">
+              <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-widest pl-1">Quick Max:</span>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleAutoOptimize(isWeapon ? 'Attack %' : 'Defense %')}
+                  disabled={remainingRolls === 0}
+                  className="px-2.5 py-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed border border-red-500/20 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
+                >
+                  {isWeapon ? 'ATK' : 'DEF'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutoOptimize('Speed')}
+                  disabled={remainingRolls === 0}
+                  className="px-2.5 py-1.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 hover:bg-yellow-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed border border-yellow-500/20 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
+                >
+                  SPD
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutoOptimize(isWeapon ? 'Crit Rate' : 'HP %')}
+                  disabled={remainingRolls === 0}
+                  className="px-2.5 py-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed border border-blue-500/20 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
+                >
+                  {isWeapon ? 'CRIT' : 'HP'}
+                </button>
+              </div>
+            </div>
+            
           </div>
         </div>
       </div>

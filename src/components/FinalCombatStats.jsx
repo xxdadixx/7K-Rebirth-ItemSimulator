@@ -70,19 +70,43 @@ export const FinalCombatStats = React.memo(({
           <div className="p-6 flex flex-col h-full">
             <div className="flex-1 bg-(--input-bg) border border-(--border-color) rounded-2xl p-4 flex flex-col shadow-inner relative overflow-hidden">
               <label className="text-[10px] text-(--text-muted) font-bold uppercase tracking-widest mb-4 block text-center">Active Set Bonus</label>
+              
               {finalStats.activeSetDetails && finalStats.activeSetDetails.length > 0 ? (
-                <div className="w-full space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1">
+                // 🌟 FIX 1: ปิด overflow-y-auto เพื่อไม่ให้ติดแท่ง Scrollbar ในรูปภาพแคปเจอร์ 🌟
+                <div className="w-full space-y-3 flex-1 pb-2">
                   {finalStats.activeSetDetails.map((set, idx) => (
-                    <div key={idx} className="bg-(--card-bg) backdrop-blur-xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-2xl p-3.5 flex flex-col gap-1.5 text-left relative overflow-hidden transition-all hover:scale-[1.02]">
-                      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-(--color-set)"></div>
-                      <div className="flex justify-between items-center pl-2">
-                        <span className="font-bold text-sm text-(--text-main) uppercase tracking-tight">{set.name}</span><span className="text-[10px] font-bold bg-(--color-set)/10 text-(--color-set) px-2.5 py-1 rounded-full border border-(--color-set)/20">{set.count}-Set</span>
+                    // 🌟 FIX 2: ลบ backdrop-blur และ absolute div ออก เปลี่ยนมาใช้ border-l แทน 🌟
+                    <div 
+                      key={idx} 
+                      className="bg-(--card-bg) border border-(--border-color) shadow-sm rounded-xl p-3.5 flex flex-col gap-1.5 text-left transition-all border-l-[5px]"
+                      style={{ borderLeftColor: 'var(--color-set, #10b981)' }}
+                    >
+                      <div className="flex justify-between items-center pl-1">
+                        <span className="font-bold text-sm text-(--text-main) uppercase tracking-tight">{set.name}</span>
+                        <span 
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-black/5 dark:bg-white/5 border-(--border-color)" 
+                          style={{ color: 'var(--color-set, #10b981)' }}
+                        >
+                          {set.count}-Set
+                        </span>
                       </div>
-                      <div className="pl-2 flex flex-col mt-1 space-y-1">{set.effects.map((eff, i) => (<span key={i} className="text-[11px] font-bold text-(--accent) leading-tight flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-(--accent)"></div>{eff}</span>))}</div>
+                      <div className="pl-1 flex flex-col mt-1 space-y-1">
+                        {set.effects.map((eff, i) => (
+                          <span key={i} className="text-[11px] font-bold text-(--accent) leading-tight flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-(--accent)"></div>
+                            {eff}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
-              ) : (<div className="flex-1 flex flex-col items-center justify-center gap-2 opacity-40"><span className="text-(--text-muted) font-bold text-[10px] uppercase tracking-widest">No Active Set</span></div>)}
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-2 opacity-40">
+                  <span className="text-(--text-muted) font-bold text-[10px] uppercase tracking-widest">No Active Set</span>
+                </div>
+              )}
+
             </div>
           </div>
         </div>

@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { toPng } from 'html-to-image';
 
 // 🌟 OPTIMIZATION: Memoize TopBar component
-export const TopBar = React.memo(({ presets, onSavePreset, onLoadPreset, onDeletePreset, isDarkMode, toggleDarkMode }) => {
+export const TopBar = React.memo(({ presets, onSavePreset, onLoadPreset, onDeletePreset, isDarkMode, toggleDarkMode, activeHeroName }) => {
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [presetNameInput, setPresetNameInput] = useState('');
   const presetMenuRef = useRef(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -20,8 +22,48 @@ export const TopBar = React.memo(({ presets, onSavePreset, onLoadPreset, onDelet
     setShowPresetMenu(false);
   };
 
+  const handleExportImage = async () => {
+    const captureArea = document.getElementById('build-capture-area');
+    if (!captureArea) return;
+
+    setIsExporting(true);
+    try {
+      const dataUrl = await toPng(captureArea, {
+        backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
+        pixelRatio: 2, // ความคมชัด 2 เท่า (เหมือน scale: 2 ของ html2canvas)
+        skipFonts: false // ดึง Font มาด้วย
+      });
+      
+      const link = document.createElement('a');
+      link.download = `7K_Build_${activeHeroName || 'Setup'}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error('Failed to export image:', error);
+      alert('Failed to save image.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="sticky top-4 md:top-6 z-120 flex justify-end gap-3 w-full pointer-events-none mb-8">
+      <div className="pointer-events-auto">
+        <button
+          onClick={handleExportImage}
+          disabled={isExporting}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-(--accent) text-white shadow-md hover:shadow-lg hover:scale-105 transition-all text-sm font-bold disabled:opacity-50"
+        >
+          {isExporting ? (
+            <span className="animate-pulse">📸 Capturing...</span>
+          ) : (
+            <>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Save as Image
+            </>
+          )}
+        </button>
+      </div>
       <div className="relative pointer-events-auto" ref={presetMenuRef}>
         <button onClick={() => setShowPresetMenu(!showPresetMenu)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-(--card-bg) backdrop-blur-xl border border-(--border-color) shadow-md hover:shadow-lg hover:scale-105 transition-all text-sm font-medium text-(--text-main)">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
@@ -34,32 +76,32 @@ export const TopBar = React.memo(({ presets, onSavePreset, onLoadPreset, onDelet
               <h3 className="text-xs font-semibold uppercase tracking-widest text-(--text-muted)">Saved Setups</h3>
               <span className="text-[10px] bg-(--input-bg) px-2 py-1 rounded-full text-(--text-main)">{presets.length} Configs</span>
             </div>
-            
+
             <div className="p-2 max-h-60 overflow-y-auto custom-scrollbar space-y-1.5">
               {presets.length === 0 ? (
                 <div className="text-center p-4 text-(--text-muted) text-sm font-semibold">No saved presets</div>
               ) : (
                 presets.map(p => (
-                  <div 
+                  <div
                     key={p.id}
                     className="flex items-center justify-between group p-2.5 hover:bg-(--hover-bg) border border-transparent hover:border-(--border-color) rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md"
                     onClick={() => { onLoadPreset(p); setShowPresetMenu(false); }}
                   >
                     {/* 🌟 ปรับ Layout ของไอเทมให้แสดงรูปภาพฮีโร่ 🌟 */}
                     <div className="flex items-center gap-3 min-w-0">
-                      
+
                       <div className="w-10 h-10 shrink-0 bg-black/10 dark:bg-black/30 rounded-lg border border-(--border-color) overflow-hidden flex items-center justify-center">
-                        <img 
-                           src={`/heroes/${p.heroName}.png`} 
-                           alt={p.heroName} 
-                           loading="lazy"
-                           decoding="async"
-                           className="w-full h-full object-contain p-0.5"
-                           onError={(e) => { 
-                             e.target.onerror = null; 
-                             e.target.src = '/favicon.svg'; 
-                             e.target.className = 'w-5 h-5 opacity-30 grayscale'; 
-                           }}
+                        <img
+                          src={`/heroes/${p.heroName}.png`}
+                          alt={p.heroName}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-contain p-0.5"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/favicon.svg';
+                            e.target.className = 'w-5 h-5 opacity-30 grayscale';
+                          }}
                         />
                       </div>
 
@@ -80,7 +122,7 @@ export const TopBar = React.memo(({ presets, onSavePreset, onLoadPreset, onDelet
                 ))
               )}
             </div>
-            
+
             <div className="p-3 border-t border-(--border-color) bg-(--input-bg) flex gap-2">
               <input type="text" placeholder="Name your setup..." value={presetNameInput} onChange={e => setPresetNameInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSave()} className="flex-1 bg-(--bg-color) border border-(--input-border) rounded-xl px-3 py-2 text-sm text-(--text-main) font-semibold focus:ring-2 focus:ring-(--accent) outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)]" />
               <button onClick={handleSave} className="bg-(--accent) text-white px-4 py-2 rounded-xl text-sm font-bold tracking-wide shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all active:scale-95">Save</button>
