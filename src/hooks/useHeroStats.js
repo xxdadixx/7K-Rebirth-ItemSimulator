@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { getTranscendBonus, getSubstatValue, getPotentialValue } from '../utils/helpers';
 
-// 🌟 OPTIMIZATION: Moved static object OUTSIDE the hook
 const SET_BONUS_DATA = {
   'Vanguard': { 2: ['Attack +20%'], 4: ['Attack +45%', 'Effect Hit Rate +20%'] },
   'Guardian': { 2: ['Defense +20%'], 4: ['Defense +45%', 'Effect Resistance +20%'] },
@@ -16,8 +15,28 @@ const SET_BONUS_DATA = {
 
 export const useHeroStats = (activeHero, equipment, potentials, transcend, ring) => {
   return useMemo(() => {
-    if (!activeHero) return null;
+    // 🌟 1. ดักจับสถานะ Unselected หรือ Null แล้ว Return ค่า 0 ทันที 🌟
+    if (!activeHero || activeHero.name === 'Unselected') {
+      return {
+        tAtk: 0, tDef: 0, tHp: 0, pAtk: 0, pDef: 0, pHp: 0,
+        breakdown: {
+          atk: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          def: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          hp: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          spd: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          critRate: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          critDmg: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          weakness: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          block: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          dmgReduc: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          effHit: { base: 0, totalChar: 0, totalEquip: 0, details: [] },
+          effRes: { base: 0, totalChar: 0, totalEquip: 0, details: [] }
+        },
+        activeSetDetails: []
+      };
+    }
 
+    // 🌟 2. ถ้ามีตัวละคร ก็คำนวณตามปกติ 🌟
     let totals = {
       'Attack %': 0, 'Attack Flat': 0, 'Defense %': 0, 'Defense Flat': 0,
       'HP %': 0, 'HP Flat': 0, 'Speed': 0,
