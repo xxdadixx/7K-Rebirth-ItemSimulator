@@ -65,7 +65,7 @@ export const EquipmentBlock = ({ title, data, allowedMains, onChange, heroType, 
   const mainStatKeys = allowedMains ? Object.keys(allowedMains) : Object.keys(SUBSTAT_BASES);
 
   return (
-    <div className="relative flex flex-col h-full min-h-[500px]">
+    <div className={`relative flex flex-col h-full min-h-[500px] transition-all duration-300 ${isDropdownOpen ? 'z-[100]' : 'z-10 hover:z-[50] focus-within:z-[50]'}`}>
       <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) pointer-events-none">
         <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
       </div>

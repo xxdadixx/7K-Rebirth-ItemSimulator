@@ -29,10 +29,12 @@ export const GlassSelect = ({
 
   return (
     <div 
-      className={`relative w-full ${className} ${isOpen ? 'z-999' : 'z-10'}`} 
+      className={`relative w-full ${className} ${isOpen ? 'z-[100]' : 'z-10'}`} 
       ref={containerRef}
     >
-      <div 
+      {/* 🌟 Changed from <div> to <button> for native focus and accessibility 🌟 */}
+      <button 
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full bg-(--input-bg) text-(--text-main) border border-(--input-border) rounded-2xl outline-none transition-all cursor-pointer font-semibold shadow-[inset_0_1px_1px_var(--glass-inner)] flex items-center gap-1.5 
         ${compact ? 'py-1.5 pl-2 pr-6 text-[11px]' : 'p-3.5 pr-10 text-sm'} 
@@ -47,7 +49,7 @@ export const GlassSelect = ({
             <path d="m19 9-7 7-7-7"/>
           </svg>
         </div>
-      </div>
+      </button>
 
       {/* 🌟 2. อัปเดตคลาสให้กางขึ้นหรือลงตามค่า dropdownPosition 🌟 */}
       {isOpen && (

@@ -167,7 +167,7 @@ export default function App() {
 
         <div className="flex flex-col xl:flex-row gap-8">
           {/* ซ้าย: Hero Profile */}
-          <div className="relative z-30 w-full xl:w-[30%] flex flex-col">
+          <div className={`relative w-full xl:w-[30%] flex flex-col transition-all duration-300 ${isDropdownOpen ? 'z-[70]' : 'z-30 hover:z-[70] focus-within:z-[70]'}`}>
             <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden">
               <div className="aurora-bg aurora-style-1"></div>
               <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) shadow-[inset_0_1px_1px_var(--glass-inner)] rounded-3xl transition-colors duration-400"></div>
@@ -216,7 +216,7 @@ export default function App() {
                     <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--text-muted)"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
                   </div>
                   {isDropdownOpen && (
-                    <div className="glass-dropdown-menu w-full overflow-hidden flex flex-col z-50">
+                    <div className="glass-dropdown-menu absolute top-full mt-2 left-0 w-full overflow-hidden flex flex-col z-[100]">
 
                       {/* --- 🌟 แท็บสลับโหมด List / Grid 🌟 --- */}
                       <div className="flex justify-end gap-1.5 p-2 border-b border-(--border-color) bg-black/5 dark:bg-white/5">
@@ -321,7 +321,6 @@ export default function App() {
                         })}
                         className={getTransColorClass(transcend)}
                         centered={true}
-                        dropdownPosition="up" /* 🌟 เติมบรรทัดนี้เพื่อให้ Trans เด้งขึ้นด้านบน */
                       />
                     </div>
                   </div>
@@ -335,7 +334,6 @@ export default function App() {
                     onChange={(val) => setRing(Number(val))}
                     options={RING_OPTIONS.map(r => ({ label: r.label, value: r.value }))}
                     centered={true}
-                    dropdownPosition="up" /* 🌟 เติมบรรทัดนี้เพื่อให้ Ring เด้งขึ้นด้านบน */
                   />
                 </div>
 
