@@ -136,7 +136,6 @@ export const HeroSetupProfile = React.memo(({
               <img
                 src={activeHero.name === 'Unselected' ? '/favicon.svg' : `/heroes/${activeHero.name}.png`}
                 alt={activeHero.name}
-                loading="lazy"
                 decoding="async"
                 className={`object-contain transition-all duration-500 drop-shadow-2xl ${activeHero.name === 'Unselected' ? 'w-12 h-12 opacity-20 grayscale' : 'w-[115%] h-[115%]'}`}
                 style={{
