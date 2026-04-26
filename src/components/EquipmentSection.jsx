@@ -7,6 +7,7 @@ const MotionDiv = motion.div;
 
 export const EquipmentSection = React.memo(({ equipment, setEquipment, validationMsg, heroType }) => {
   const [eqLayout, setEqLayout] = useState('row');
+  const [clipboardSubstats, setClipboardSubstats] = useState(null);
 
   const eqListConfig = useMemo(() => {
     const baseConfig = [
@@ -23,30 +24,59 @@ export const EquipmentSection = React.memo(({ equipment, setEquipment, validatio
     setEquipment(prev => ({ ...prev, [slotName]: newData }));
   }, [setEquipment]);
 
+  const handleSyncSubstats = useCallback(() => {
+    if (window.confirm("Copy Weapon 1's substats to all other equipment?")) {
+      setEquipment(prev => {
+        // Use JSON parse/stringify for deep copy to prevent reference bugs
+        const sourceSubstats = JSON.parse(JSON.stringify(prev.weapon1.substats));
+        return {
+          ...prev,
+          weapon2: { ...prev.weapon2, substats: JSON.parse(JSON.stringify(sourceSubstats)) },
+          armor1: { ...prev.armor1, substats: JSON.parse(JSON.stringify(sourceSubstats)) },
+          armor2: { ...prev.armor2, substats: JSON.parse(JSON.stringify(sourceSubstats)) }
+        };
+      });
+    }
+  }, [setEquipment]);
+
   return (
     <div className="pt-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-2 gap-4 pb-2 relative z-30">
         <div className="flex items-center gap-4">
           <h2 className="text-(--text-muted) font-semibold tracking-widest text-xs uppercase">Equipment Slots</h2>
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border backdrop-blur-md shadow-sm transition-colors duration-300 ${validationMsg.bg} ${validationMsg.border} ${validationMsg.color}`}>
-            {validationMsg.status === 'success' && <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
-            {validationMsg.status === 'warning' && <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m-3-9h6l3 3v6l-3 3H9l-3-3V9l3-3z"/></svg>}
-            {validationMsg.status === 'error' && <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>}
+            {validationMsg.status === 'success' && <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+            {validationMsg.status === 'warning' && <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m-3-9h6l3 3v6l-3 3H9l-3-3V9l3-3z" /></svg>}
+            {validationMsg.status === 'error' && <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
             <span className="text-[10px] font-bold uppercase tracking-wider">{validationMsg.text}</span>
           </div>
         </div>
 
-        <div className="flex bg-(--input-bg) p-1 rounded-xl border border-(--border-color)">
-          <button 
-            onClick={() => setEqLayout('row')} 
+        <div className="flex bg-(--input-bg) p-1 rounded-xl border border-(--border-color) items-center">
+
+          <button
+            onClick={handleSyncSubstats}
+            className="px-3 py-1.5 rounded-lg transition-all flex items-center justify-center text-(--text-muted) hover:text-(--text-main) hover:bg-black/5 dark:hover:bg-white/5"
+            title="Copy Weapon 1 Substats to All"
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </button>
+
+          {/* Divider */}
+          <div className="w-[1px] h-4 bg-(--border-color) mx-1"></div>
+
+          <button
+            onClick={() => setEqLayout('row')}
             className={`px-3 py-1.5 rounded-lg transition-all flex items-center justify-center ${eqLayout === 'row' ? 'bg-(--accent) text-white shadow-sm' : 'text-(--text-muted) hover:text-(--text-main)'}`}
             title="1 Row View"
           >
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
-          
-          <button 
-            onClick={() => setEqLayout('grid')} 
+
+          <button
+            onClick={() => setEqLayout('grid')}
             className={`px-3 py-1.5 rounded-lg transition-all flex items-center justify-center ${eqLayout === 'grid' ? 'bg-(--accent) text-white shadow-sm' : 'text-(--text-muted) hover:text-(--text-main)'}`}
             title="2x2 Grid View"
           >
@@ -58,33 +88,45 @@ export const EquipmentSection = React.memo(({ equipment, setEquipment, validatio
       <div className={`grid grid-cols-1 md:grid-cols-2 ${eqLayout === 'row' ? 'xl:grid-cols-4' : 'xl:grid-cols-2 max-w-4xl mx-auto'} gap-6 pt-2 relative z-20`}>
         {eqListConfig.map((eq, idx) => {
           const auroraClasses = ['aurora-style-4', 'aurora-style-1', 'aurora-style-2', 'aurora-style-3'];
-          const isWeaponItem = eq.key.includes('weapon'); 
+          const isWeaponItem = eq.key.includes('weapon');
 
           return (
             // 🌟 ลบ CSS Hover เดิมทิ้ง และใช้ whileHover กับ layout แบบแยกความเร็วกัน 🌟
-            <MotionDiv 
+            <MotionDiv
               layout
               whileHover={{ y: -6 }} // ใช้ Framer Motion ทำเอฟเฟกต์ยกการ์ดแทน Tailwind
-              transition={{ 
+              transition={{
                 layout: { type: "spring", stiffness: 350, damping: 30 }, // ความนุ่มตอนบินสลับที่
                 hover: { duration: 0.2 } // ความเร็วตอนเอาเมาส์ชี้
               }}
-              key={eq.key} 
+              key={eq.key}
               className="relative flex flex-col" // ❌ ลบ transition-transform ออกแล้ว
-              style={{ borderRadius: '1.5rem', zIndex: 10 }} 
+              style={{ borderRadius: '1.5rem', zIndex: 10 }}
             >
               <div className="absolute inset-0 rounded-3xl shadow-(--glass-shadow) overflow-hidden pointer-events-none">
                 <div className={`aurora-bg ${auroraClasses[idx]}`}></div>
                 <div className="absolute inset-0 bg-(--card-bg) backdrop-blur-3xl border border-(--border-color) rounded-3xl transition-colors duration-400"></div>
               </div>
               <div className="relative z-10 flex flex-col h-full">
-                <EquipmentBlock 
-                  title={eq.title} 
-                  data={equipment[eq.key]} 
-                  allowedMains={eq.allowed} 
-                  onChange={(newData) => handleEqChange(eq.key, newData)} 
+                <EquipmentBlock
+                  title={eq.title}
+                  data={equipment[eq.key]}
+                  allowedMains={eq.allowed}
+                  onChange={(newData) => handleEqChange(eq.key, newData)}
                   heroType={heroType}
                   isWeapon={isWeaponItem}
+                  // 🌟 ส่ง Props สำหรับระบบ Copy/Paste
+                  clipboardSubstats={clipboardSubstats}
+                  onCopy={() => setClipboardSubstats(equipment[eq.key].substats)}
+                  onPaste={() => {
+                    if (clipboardSubstats) {
+                      handleEqChange(eq.key, {
+                        ...equipment[eq.key],
+                        // Use JSON parse/stringify for deep copy to prevent reference bugs
+                        substats: JSON.parse(JSON.stringify(clipboardSubstats))
+                      });
+                    }
+                  }}
                 />
               </div>
             </MotionDiv>

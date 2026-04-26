@@ -8,7 +8,7 @@ import { GlassSelect } from './GlassSelect';
 const MotionDiv = motion.div;
 const MotionButton = motion.button;
 
-export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange, heroType, isWeapon }) => {
+export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange, heroType, isWeapon, clipboardSubstats, onCopy, onPaste }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const dropdownRef = useRef(null);
@@ -28,7 +28,7 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
   const handleAutoOptimize = useCallback((targetType) => {
     let currentRemaining = remainingRolls;
     if (currentRemaining <= 0) return;
-    const newSubs = [...data.substats].map(sub => ({ ...sub })); 
+    const newSubs = [...data.substats].map(sub => ({ ...sub }));
     let targetIdx = newSubs.findIndex(s => s.type === targetType);
 
     if (targetIdx !== -1) {
@@ -103,10 +103,34 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
           <h2 className="text-(--text-main) font-bold tracking-wide text-xs uppercase truncate min-w-0 flex items-center gap-1.5">
             {isWeapon ? '⚔️' : '🛡️'} {title}
           </h2>
-          <span className={`shrink-0 text-[10px] font-bold px-2 py-1 rounded-full border shadow-sm transition-all
-            ${remainingRolls === 0 ? "bg-(--input-bg) text-(--text-muted) border-(--border-color)" : "bg-(--accent)/10 text-(--accent) border-(--accent)/20"}`}>
-            Usable Substats: {remainingRolls}
-          </span>
+
+          {/* 🌟 เพิ่มกลุ่มปุ่ม Copy / Paste และย้าย Badge มารวมกัน 🌟 */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Copy Button */}
+            <button
+              type="button"
+              onClick={onCopy}
+              className="p-1.5 rounded-lg bg-(--input-bg) border border-(--border-color) text-(--text-muted) hover:text-(--accent) hover:border-(--accent) transition-all shadow-sm"
+              title="Copy Substats"
+            >
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            </button>
+
+            {/* Paste Button (Disabled if clipboard is empty) */}
+            <button
+              type="button"
+              onClick={onPaste}
+              disabled={!clipboardSubstats}
+              className="p-1.5 rounded-lg bg-(--input-bg) border border-(--border-color) text-(--text-muted) hover:text-emerald-500 hover:border-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+              title="Paste Substats"
+            >
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+            </button>
+
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full border shadow-sm transition-all ${remainingRolls === 0 ? "bg-(--input-bg) text-(--text-muted) border-(--border-color)" : "bg-(--accent)/10 text-(--accent) border-(--accent)/20"}`}>
+              Usable: {remainingRolls}
+            </span>
+          </div>
         </div>
 
         <div className="p-5 flex flex-col gap-6">
@@ -139,8 +163,8 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
                   </div>
 
                   {/* 🌟 เปลี่ยนมาใช้ตัวแปร MotionDiv และ MotionButton ที่สร้างไว้ 🌟 */}
-                  <MotionDiv 
-                    layout 
+                  <MotionDiv
+                    layout
                     className={`overflow-y-auto custom-scrollbar p-2 ${viewMode === 'list' ? 'flex flex-col gap-1' : 'grid grid-cols-2 gap-3'}`}
                     style={{ maxHeight: '260px' }}
                   >
@@ -239,7 +263,7 @@ export const EquipmentBlock = React.memo(({ title, data, allowedMains, onChange,
                 ))}
               </div>
             </div>
-            
+
           </div>
         </div>
       </div>
