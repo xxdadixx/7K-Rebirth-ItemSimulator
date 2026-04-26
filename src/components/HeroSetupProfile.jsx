@@ -61,6 +61,8 @@ export const HeroSetupProfile = React.memo(({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchViewMode, setSearchViewMode] = useState('grid');
   const dropdownRef = useRef(null);
+
+  // State สำหรับ Filter
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [activeFilters, setActiveFilters] = useState({
     element: [],
@@ -68,14 +70,26 @@ export const HeroSetupProfile = React.memo(({
     grade: []
   });
 
-  // ตัวเลือกสำหรับ Filter
+  const [sortBy, setSortBy] = useState('name-asc');
+
+  // 🌟 ฟังก์ชันสำหรับสลับโหมดการเรียงลำดับ
+  const handleSortToggle = useCallback((type) => {
+    setSortBy(prev => {
+      if (type === 'name') {
+        return prev === 'name-asc' ? 'name-desc' : 'name-asc';
+      } else if (type === 'grade') {
+        return prev === 'grade-desc' ? 'grade-asc' : 'grade-desc';
+      }
+      return 'name-asc';
+    });
+  }, []);
+
   const FILTER_OPTIONS = useMemo(() => ({
     element: ['ATTACK', 'MAGIC', 'UNIVERSAL', 'DEFENSE', 'SUPPORT'],
     type: ['ATTACK', 'MAGIC'],
     grade: ['LEGEND', 'RARE']
   }), []);
 
-  // ฟังก์ชันสลับค่า Filter
   const toggleFilter = useCallback((category, value) => {
     setActiveFilters(prev => {
       const current = prev[category];
@@ -84,64 +98,78 @@ export const HeroSetupProfile = React.memo(({
     });
   }, []);
 
-  // 🌟 1. สร้าง State และ Ref สำหรับเอฟเฟกต์ 3D Tilt 🌟
   const cardRef = useRef(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0, scale: 1 });
 
+  // ฟังก์ชันกรองฮีโร่
   const filteredHeroes = useMemo(() => {
-    return heroDataList.filter(h => {
-      // ค้นหาแบบพิมพ์ข้อความ
+    // ขั้นตอนที่ 1: กรองข้อมูล (Filtering)
+    let result = heroDataList.filter(h => {
       const searchLower = (searchTerm || '').trim().toLowerCase();
-      const matchSearch = !searchLower || 
+      const matchSearch = !searchLower ||
         h.name.toLowerCase().includes(searchLower) ||
         (h.element || '').toLowerCase().includes(searchLower) ||
         (h.type || '').toLowerCase().includes(searchLower) ||
         (h.grade || '').toLowerCase().includes(searchLower) ||
         (h.star4Type || '').toLowerCase().includes(searchLower);
 
-      // ดึงค่ามา .trim() ตัดช่องว่างทิ้ง และทำเป็นตัวพิมพ์ใหญ่ก่อนเสมอ
       const hElement = (h.element || '').trim().toUpperCase();
       const hType = (h.type || '').trim().toUpperCase();
       const hGrade = (h.grade || '').trim().toUpperCase();
 
-      // ตรวจสอบค่ากับปุ่ม Filter ที่ถูกกด
       const matchElement = activeFilters.element.length === 0 || activeFilters.element.includes(hElement);
       const matchType = activeFilters.type.length === 0 || activeFilters.type.includes(hType);
       const matchGrade = activeFilters.grade.length === 0 || activeFilters.grade.includes(hGrade);
 
       return matchSearch && matchElement && matchType && matchGrade;
     });
-  }, [heroDataList, searchTerm, activeFilters]);
+
+    result.sort((a, b) => {
+      if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+
+      if (sortBy.startsWith('grade')) {
+        const gradeWeight = { 'LEGEND': 2, 'RARE': 1 };
+        const weightA = gradeWeight[(a.grade || '').toUpperCase()] || 0;
+        const weightB = gradeWeight[(b.grade || '').toUpperCase()] || 0;
+
+        if (weightB !== weightA) {
+          // สลับการเรียงตามน้ำหนัก Grade
+          return sortBy === 'grade-desc' ? weightB - weightA : weightA - weightB;
+        }
+        return a.name.localeCompare(b.name); // ถ้า Grade เท่ากัน ให้เรียงตามชื่อ A-Z
+      }
+      return 0;
+    });
+
+    return result;
+  }, [heroDataList, searchTerm, activeFilters, sortBy]);
 
   useEffect(() => {
     if (!isDropdownOpen) return;
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsDropdownOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsDropdownOpen(false);
+        setShowFilterPanel(false); // 🌟 Add this line to reset the filter panel
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
-  // 🌟 2. ฟังก์ชันคำนวณการเอียงของการ์ดตามเมาส์ 🌟
   const handleMouseMove = useCallback((e) => {
     if (!cardRef.current || activeHero.name === 'Unselected') return;
-
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-
-    // คำนวณองศาการเอียง (ปรับเลข 20 เพื่อเพิ่ม/ลดความชัน)
     const rotateX = ((y - centerY) / centerY) * -20;
     const rotateY = ((x - centerX) / centerX) * 20;
-
     setTilt({ x: rotateX, y: rotateY, scale: 1.05 });
   }, [activeHero.name]);
 
   const handleMouseLeave = useCallback(() => {
-    // คืนค่ากลับที่เดิมเมื่อเอาเมาส์ออก
     setTilt({ x: 0, y: 0, scale: 1 });
   }, []);
 
@@ -163,53 +191,29 @@ export const HeroSetupProfile = React.memo(({
 
         <div className="p-6 flex flex-col gap-6">
 
-          {/* 🌟 โครงสร้างกรอบรูปภาพที่รองรับ 3D Parallax Tilt 🌟 */}
+          {/* กรอบรูปภาพ 3D */}
           <div key={activeHero.name} className="flex flex-col items-center justify-center -mt-2 animate-hero-swap" style={{ perspective: '1000px' }}>
             <div
               ref={cardRef}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
               className={`relative w-[120px] aspect-156/194 md:w-[140px] rounded-2xl overflow-hidden border-2 shadow-xl flex items-center justify-center ease-out ${getGradeBgClass(activeHero.grade)} ${tilt.scale === 1 ? 'transition-all duration-500' : ''}`}
-              style={{
-                transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${tilt.scale})`,
-                transformStyle: 'preserve-3d',
-                cursor: activeHero.name !== 'Unselected' ? 'crosshair' : 'default'
-              }}
+              style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${tilt.scale})`, transformStyle: 'preserve-3d', cursor: activeHero.name !== 'Unselected' ? 'crosshair' : 'default' }}
             >
               <img
                 src={activeHero.name === 'Unselected' ? '/favicon.svg' : `/heroes/${activeHero.name}.png`}
                 alt={activeHero.name}
                 decoding="async"
                 className={`object-contain transition-all duration-500 drop-shadow-2xl ${activeHero.name === 'Unselected' ? 'w-12 h-12 opacity-20 grayscale' : 'w-[115%] h-[115%]'}`}
-                style={{
-                  transform: 'translateZ(40px)',
-                }}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/favicon.svg';
-                  e.target.className = 'w-10 h-10 opacity-20 grayscale';
-                }}
+                style={{ transform: 'translateZ(40px)' }}
+                onError={(e) => { e.target.onerror = null; e.target.src = '/favicon.svg'; e.target.className = 'w-10 h-10 opacity-20 grayscale'; }}
               />
               <div className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-black/80 via-black/30 to-transparent" style={{ transform: 'translateZ(10px)' }}></div>
             </div>
 
-            <style>
-              {`
-                @keyframes breathe-effect {
-                  0%, 100% { text-shadow: 0 0 8px currentColor, 0 0 15px currentColor; transform: translateY(0) scale(1); }
-                  50% { text-shadow: 0 0 15px currentColor, 0 0 25px currentColor; transform: translateY(-2px) scale(1.05); }
-                }
-              `}
-            </style>
+            <style>{`@keyframes breathe-effect { 0%, 100% { text-shadow: 0 0 8px currentColor, 0 0 15px currentColor; transform: translateY(0) scale(1); } 50% { text-shadow: 0 0 15px currentColor, 0 0 25px currentColor; transform: translateY(-2px) scale(1.05); } }`}</style>
 
-            <h3
-              className={`mt-5 uppercase tracking-widest transition-colors ${getGradeColorClass(activeHero.grade)}`}
-              style={{
-                fontFamily: '"Press Start 2P", monospace',
-                fontSize: '1.1rem',
-                animation: activeHero.name !== 'Unselected' ? 'breathe-effect 2.5s ease-in-out infinite' : 'none'
-              }}
-            >
+            <h3 className={`mt-5 uppercase tracking-widest transition-colors ${getGradeColorClass(activeHero.grade)}`} style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '1.1rem', animation: activeHero.name !== 'Unselected' ? 'breathe-effect 2.5s ease-in-out infinite' : 'none' }}>
               {activeHero.name}
             </h3>
 
@@ -219,96 +223,175 @@ export const HeroSetupProfile = React.memo(({
                 <span className="text-[9px] font-bold uppercase tracking-widest text-(--text-muted)">Active Setup</span>
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
               </div>
-            ) : (
-              <div className="mt-1.5 h-[14px]"></div>
-            )}
+            ) : <div className="mt-1.5 h-[14px]"></div>}
           </div>
 
           <div className="relative w-full" ref={dropdownRef}>
-            <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1">Search & Filter</label>
+            <label className="text-[11px] text-(--text-muted) font-medium uppercase tracking-wider mb-2 block pl-1">Search Hero</label>
 
-            <div className="flex gap-2 w-full">
-              <div className="relative flex-1">
-                <input type="text" className={`w-full bg-(--input-bg) border border-(--input-border) rounded-2xl p-3.5 pl-10 font-semibold focus:ring-2 focus:ring-(--accent) outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] ${getGradeColorClass(activeHero?.grade)}`} placeholder="Type to search..." value={isDropdownOpen ? searchTerm : activeHero?.name || ''} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => { setIsDropdownOpen(true); setSearchTerm(''); }} />
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--text-muted)"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
-              </div>
-              
-              {/* 🌟 2.1 เพิ่ม stopPropagation และปรับ Logic การเปิดปิดให้เสถียร */}
-              <button 
-                type="button" 
-                onClick={(e) => { 
-                  e.preventDefault();
-                  e.stopPropagation(); // ป้องกัน Event ตีกัน
-                  if (!isDropdownOpen) {
-                    setIsDropdownOpen(true);
-                    setShowFilterPanel(true);
-                  } else {
-                    setShowFilterPanel(prev => !prev);
-                  }
-                }} 
-                className={`flex items-center justify-center px-4 border rounded-2xl transition-all duration-300 shadow-sm ${showFilterPanel || Object.values(activeFilters).some(arr => arr.length > 0) ? 'bg-(--accent) text-white border-(--accent)' : 'bg-(--input-bg) border-(--input-border) text-(--text-muted) hover:text-(--text-main)'}`}
-                title="Filter Options"
-              >
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-              </button>
+            {/* 🌟 1. นำปุ่ม Filter ด้านนอกออก เพื่อให้ช่อง Input กลับมากว้างเต็มพื้นที่ 🌟 */}
+            <div className="relative">
+              <input type="text" className={`w-full bg-(--input-bg) border border-(--input-border) rounded-2xl p-3.5 pl-10 font-semibold focus:ring-2 focus:ring-(--accent) outline-none transition-all shadow-[inset_0_1px_1px_var(--glass-inner)] ${getGradeColorClass(activeHero?.grade)}`} placeholder="Type to search..." value={isDropdownOpen ? searchTerm : activeHero?.name || ''} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => { setIsDropdownOpen(true); setSearchTerm(''); }} />
+              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--text-muted)"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
             </div>
 
             {isDropdownOpen && (
               <div className="glass-dropdown-menu absolute top-full mt-2 left-0 w-full overflow-hidden flex flex-col z-100 origin-top animate-in fade-in slide-in-from-top-2 duration-200">
 
-                {/* 🌟 3.2 สร้าง UI แผงควบคุมตัวกรอง (Filter Panel) แทรกไว้ด้านบนของ Dropdown */}
-                <AnimatePresence>
-                  {showFilterPanel && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-b border-(--border-color) bg-black/5 dark:bg-white/5 overflow-hidden"
-                    >
-                      <div className="p-3 space-y-3">
-                        {/* Element Filter */}
-                        <div>
-                          <div className="text-[9px] font-bold text-(--text-muted) uppercase tracking-widest mb-1.5">Element</div>
+                {/* 🌟 2. สร้าง Toolbar Header (รวมปุ่ม Filter ไว้ฝั่งซ้าย และ Grid/List ไว้ฝั่งขวา) 🌟 */}
+                <div className="flex justify-between items-center p-2 border-b border-(--border-color) bg-black/5 dark:bg-white/5">
+
+                  {/* ปุ่ม Filter ด้านใน Dropdown */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowFilterPanel(prev => !prev);
+                    }}
+                    className={`flex items-center justify-center px-3 py-1.5 rounded-lg border transition-all duration-300 shadow-sm text-[10px] font-bold uppercase tracking-widest gap-1.5 ${showFilterPanel || Object.values(activeFilters).flat().length > 0 ? 'bg-(--accent) text-white border-(--accent)' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}
+                    title="Filter Options"
+                  >
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                    Filter {Object.values(activeFilters).flat().length > 0 && `(${Object.values(activeFilters).flat().length})`}
+                  </button>
+
+                  {/* ปุ่มสลับ Grid/List */}
+                  <div className="flex gap-1.5">
+                    <button type="button" onClick={(e) => { e.preventDefault(); setSearchViewMode('list'); }} className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${searchViewMode === 'list' ? 'bg-(--accent) text-white shadow-md' : 'text-(--text-muted) hover:bg-black/10 dark:hover:bg-white/10'}`}>
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
+                    <button type="button" onClick={(e) => { e.preventDefault(); setSearchViewMode('grid'); }} className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${searchViewMode === 'grid' ? 'bg-(--accent) text-white shadow-md' : 'text-(--text-muted) hover:bg-black/10 dark:hover:bg-white/10'}`}>
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 🌟 3. แผงตัวเลือก Filter (แสดงอยู่ใต้ Header) 🌟 */}
+                {showFilterPanel && (
+                  <div className="border-b border-(--border-color) bg-black/5 dark:bg-white/5 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                    <div className="p-3 space-y-3">
+
+                      {/* 🌟 3. UI สำหรับจัดเรียงข้อมูล (Sort By) 🌟 */}
+                      <div>
+                        <div className="text-[9px] font-bold text-(--text-muted) uppercase tracking-widest mb-1.5">Sort By</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {/* Name Sort Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleSortToggle('name'); }}
+                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all flex items-center gap-1 ${sortBy.startsWith('name') ? 'bg-(--accent) text-white border-(--accent) shadow-sm scale-105' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}
+                          >
+                            Name {sortBy === 'name-asc' ? '(A-Z)' : sortBy === 'name-desc' ? '(Z-A)' : ''}
+                          </button>
+
+                          {/* Grade Sort Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleSortToggle('grade'); }}
+                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all flex items-center gap-1 ${sortBy.startsWith('grade') ? 'bg-(--accent) text-white border-(--accent) shadow-sm scale-105' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}
+                          >
+                            Grade {sortBy === 'grade-desc' ? '(High-Low)' : sortBy === 'grade-asc' ? '(Low-High)' : ''}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[9px] font-bold text-(--text-muted) uppercase tracking-widest mb-1.5">Element</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {FILTER_OPTIONS.element.map(el => (
+                            <button key={el} onClick={(e) => { e.preventDefault(); toggleFilter('element', el); }} className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${activeFilters.element.includes(el) ? getElementBgClass(el) + ' ' + getElementColorClass(el) + ' ring-1 ring-current scale-105' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}>
+                              {el}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <div className="text-[9px] font-bold text-(--text-muted) uppercase tracking-widest mb-1.5">Type</div>
                           <div className="flex flex-wrap gap-1.5">
-                            {FILTER_OPTIONS.element.map(el => (
-                              <button key={el} onClick={(e) => { e.preventDefault(); toggleFilter('element', el); }} className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${activeFilters.element.includes(el) ? getElementBgClass(el) + ' ' + getElementColorClass(el) + ' ring-1 ring-current scale-105' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}>
-                                {el}
+                            {FILTER_OPTIONS.type.map(t => (
+                              <button key={t} onClick={(e) => { e.preventDefault(); toggleFilter('type', t); }} className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${activeFilters.type.includes(t) ? 'bg-(--accent)/20 text-(--accent) border-(--accent)/50 ring-1 ring-(--accent) scale-105' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}>
+                                {t}
                               </button>
                             ))}
                           </div>
                         </div>
-                        <div className="flex gap-4">
-                          {/* Type Filter */}
-                          <div className="flex-1">
-                            <div className="text-[9px] font-bold text-(--text-muted) uppercase tracking-widest mb-1.5">Type</div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {FILTER_OPTIONS.type.map(t => (
-                                <button key={t} onClick={(e) => { e.preventDefault(); toggleFilter('type', t); }} className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${activeFilters.type.includes(t) ? 'bg-(--accent)/20 text-(--accent) border-(--accent)/50 ring-1 ring-(--accent) scale-105' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}>
-                                  {t}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          {/* Grade Filter */}
-                          <div className="flex-1">
-                            <div className="text-[9px] font-bold text-(--text-muted) uppercase tracking-widest mb-1.5">Grade</div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {FILTER_OPTIONS.grade.map(g => (
-                                <button key={g} onClick={(e) => { e.preventDefault(); toggleFilter('grade', g); }} className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${activeFilters.grade.includes(g) ? getGradeBgClass(g) + ' ' + getGradeColorClass(g) + ' ring-1 ring-current scale-105' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}>
-                                  {g}
-                                </button>
-                              ))}
-                            </div>
+                        <div className="flex-1">
+                          <div className="text-[9px] font-bold text-(--text-muted) uppercase tracking-widest mb-1.5">Grade</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {FILTER_OPTIONS.grade.map(g => (
+                              <button key={g} onClick={(e) => { e.preventDefault(); toggleFilter('grade', g); }} className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${activeFilters.grade.includes(g) ? getGradeBgClass(g) + ' ' + getGradeColorClass(g) + ' ring-1 ring-current scale-105' : 'bg-(--input-bg) border-(--border-color) text-(--text-muted) hover:text-(--text-main)'}`}>
+                                {g}
+                              </button>
+                            ))}
                           </div>
                         </div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </div>
+                  </div>
+                )}
 
-                {/* --- โค้ดส่วนปุ่มสลับ Grid/List และรายการฮีโร่จะอยู่ด้านล่างต่อจากนี้ตามปกติ --- */}
-                <div className="flex justify-end gap-1.5 p-2 border-b border-(--border-color) bg-black/5 dark:bg-white/5">
+                {/* 🌟 3. รายชื่อฮีโร่และผลลัพธ์การค้นหา (กลับมาแล้ว) */}
+                <div className="max-h-[320px] overflow-y-auto overflow-x-hidden custom-scrollbar p-2">
+                  <AnimatePresence mode="wait">
+                    {filteredHeroes.length > 0 ? (
+                      <MotionDiv
+                        key={searchViewMode}
+                        initial={{ opacity: 0, scale: 0.95, y: 5 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className={searchViewMode === 'list' ? 'flex flex-col gap-1' : 'grid grid-cols-3 sm:grid-cols-4 gap-2'}
+                      >
+                        {filteredHeroes.map(h => (
+                          <button
+                            key={h.name}
+                            type="button"
+                            onClick={() => {
+                              setSelectedHeroName(h.name);
+                              setIsDropdownOpen(false);
+                              setSearchTerm('');
+                              setShowFilterPanel(false); // 🌟 Add this line to close panel after selection
+                            }}
+                            className={
+                              searchViewMode === 'list'
+                                ? "dropdown-item-hover w-full text-left px-4 py-3 flex justify-between items-center border border-transparent hover:border-(--border-color) rounded-xl"
+                                : `relative aspect-156/194 rounded-xl overflow-hidden border-2 transition-all duration-300 hover:scale-105 hover:z-10 shadow-sm group ${getGradeBgClass(h.grade)}`
+                            }
+                          >
+                            {searchViewMode === 'list' ? (
+                              <>
+                                <span className={`font-semibold ${getGradeColorClass(h.grade)}`}>{h.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getElementBgClass(h.element)} ${getElementColorClass(h.element)}`}>{h.element}</span>
+                                  <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getGradeBgClass(h.grade)}`}>{h.grade}</span>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <img src={`/heroes/${h.name}.png`} alt={h.name} decoding="async" className="w-full h-full object-contain bg-black/10 dark:bg-black/40 group-hover:brightness-110 transition-all" onError={(e) => { e.target.onerror = null; e.target.src = '/favicon.svg'; e.target.className = 'w-8 h-8 m-auto opacity-20 grayscale mt-6'; }} />
+                                <div className="absolute inset-x-0 bottom-0 bg-black/70 backdrop-blur-md px-1 py-1.5 border-t border-white/10"><span className={`block text-[9px] font-bold text-center truncate tracking-wider ${getGradeColorClass(h.grade)}`}>{h.name}</span></div>
+                              </>
+                            )}
+                          </button>
+                        ))}
+                      </MotionDiv>
+                    ) : (
+                      <MotionDiv
+                        key="not-found"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="p-8 text-center text-(--text-muted) text-sm font-bold uppercase tracking-widest col-span-full"
+                      >
+                        No hero found
+                      </MotionDiv>
+                    )}
+                  </AnimatePresence>
                 </div>
+
               </div>
             )}
           </div>

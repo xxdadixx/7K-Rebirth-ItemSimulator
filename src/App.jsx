@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { parseCSVData, getValidationStatus } from './utils/helpers';
 import { useHeroStats } from './hooks/useHeroStats';
 import { TopBar } from './components/TopBar';
+import { Footer } from './components/Footer';
 import { HeroSetupProfile } from './components/HeroSetupProfile';
 import { BaseStatsPanel } from './components/BaseStatsPanel';
 import { FinalCombatStats } from './components/FinalCombatStats';
@@ -128,58 +129,65 @@ export default function App() {
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-10 pb-48 selection:bg-(--accent) selection:text-white transition-colors duration-400">
+    // 🌟 1. ปรับ div นอกสุดให้เป็น Flex Container และลบ Padding ออก เพื่อให้ขยายเต็มขอบจอ 100%
+    <div className="min-h-screen flex flex-col selection:bg-(--accent) selection:text-white transition-colors duration-400 relative">
       <div className="arcade-grid-bg"></div>
       <div className="crt-overlay"></div>
 
-      <div className="max-w-[1400px] mx-auto space-y-8 relative">
-      <TopBar
-          presets={presets}
-          onSavePreset={handleSavePreset}
-          onLoadPreset={handleLoadPreset}
-          onDeletePreset={handleDeletePreset}
-          onUpdatePresetName={handleUpdatePresetName}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-          activeHeroName={activeHero?.name !== 'Unselected' ? activeHero?.name : 'Setup'}
-        />
-        <div id="build-capture-area" className="p-2 sm:p-4 rounded-3xl space-y-8">
-          <div className="flex flex-col xl:flex-row gap-8">
-            <HeroSetupProfile
-              activeHero={activeHero}
-              heroDataList={heroDataList}
-              setSelectedHeroName={setSelectedHeroName}
-              transcend={transcend}
-              setTranscend={setTranscend}
-              ring={ring}
-              setRing={setRing}
-              onReset={handleReset}
-            />
-            <BaseStatsPanel
-              activeHero={activeHero}
+      {/* 🌟 2. สร้างแท็ก <main> มาครอบเนื้อหาเดิม ย้าย Padding มาไว้ตรงนี้ และใช้ flex-1 เพื่อดัน Footer ลงไปล่างสุด */}
+      <main className="flex-1 p-4 md:p-6 lg:p-10 pb-20">
+        <div className="max-w-[1400px] mx-auto space-y-8 relative">
+          <TopBar
+            presets={presets}
+            onSavePreset={handleSavePreset}
+            onLoadPreset={handleLoadPreset}
+            onDeletePreset={handleDeletePreset}
+            onUpdatePresetName={handleUpdatePresetName}
+            isDarkMode={isDarkMode}
+            toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+            activeHeroName={activeHero?.name !== 'Unselected' ? activeHero?.name : 'Setup'}
+          />
+
+          <div id="build-capture-area" className="p-2 sm:p-4 rounded-3xl space-y-8">
+            <div className="flex flex-col xl:flex-row gap-8">
+              <HeroSetupProfile
+                activeHero={activeHero}
+                heroDataList={heroDataList}
+                setSelectedHeroName={setSelectedHeroName}
+                transcend={transcend}
+                setTranscend={setTranscend}
+                ring={ring}
+                setRing={setRing}
+                onReset={handleReset}
+              />
+              <BaseStatsPanel
+                activeHero={activeHero}
+                finalStats={finalStats}
+                potentials={potentials}
+                handlePotentialChange={handlePotentialChange}
+                isDarkMode={isDarkMode}
+              />
+            </div>
+
+            <FinalCombatStats
               finalStats={finalStats}
-              potentials={potentials}
-              handlePotentialChange={handlePotentialChange}
+              snapshotStats={snapshotStats}
+              handleToggleSnapshot={handleToggleSnapshot}
               isDarkMode={isDarkMode}
             />
+
+            <EquipmentSection
+              equipment={equipment}
+              setEquipment={setEquipment}
+              validationMsg={validationMsg}
+              heroType={activeHero.type}
+            />
           </div>
-
-          <FinalCombatStats
-            finalStats={finalStats}
-            snapshotStats={snapshotStats}
-            handleToggleSnapshot={handleToggleSnapshot}
-            isDarkMode={isDarkMode} // 🌟 แก้ไขตรงนี้ ส่งค่าไปให้แล้วครับ 🌟
-          />
-
-          <EquipmentSection
-            equipment={equipment}
-            setEquipment={setEquipment}
-            validationMsg={validationMsg}
-            heroType={activeHero.type}
-          />
         </div>
-        <div className="h-64 w-full shrink-0 pointer-events-none"></div>
-      </div>
+      </main>
+
+      <Footer />
+
     </div>
   );
 }

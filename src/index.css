@@ -160,6 +160,23 @@
     --a4-c3: rgba(48, 209, 88, 0.25);
   }
 
+  /* 🌟 Force pointer cursor on all button tags and elements acting as buttons */
+  button, 
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer;
+  }
+
+  /* 🌟 Fallback for disabled buttons to show a 'not-allowed' cursor */
+  button:disabled, 
+  [role="button"][aria-disabled="true"],
+  button[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6; /* Optional: Visually indicate disabled state */
+  }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
